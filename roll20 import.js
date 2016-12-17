@@ -593,10 +593,10 @@ var importer = (function ()
         {
             rowCallbacks.push(function (callbacks)
             {
-                setTimeout(function (section, callback, item)
-                {
-                    addRow(section, callback, item, callbacks);
-                }, 100, section, callback, item);
+                //setTimeout(function (section, callback, item)
+                //{
+                addRow(section, callback, item, callbacks);
+                //}, 20, section, callback, item);
             });
         });
 
@@ -886,14 +886,13 @@ var importer = (function ()
         {
             target.click()
             target.focus();
+            target.value = value;
+
             triggerEvent(target, 'change');
             triggerEvent(target, 'keydown');
             triggerEvent(target, 'keyup');
-
-            target.value = value;
-
-            target.blur();
             triggerEvent(target, 'blur');
+            //target.blur();
         }
     }
     function triggerEvent(target, eventName)

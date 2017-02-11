@@ -1,20 +1,7 @@
 //todo look at using xpath for extraction
 NodeList.forEach = Array.forEach;
 
-var Views = {
-    Dropzone: {
-        charactersPane: '#journal > div[data-globalfolderid="-characters"]',
-        setupDropzone: function ()
-        {
-            var dropbox;
-            dropbox = document.querySelector(charactersPane);
-            dropbox.addEventListener("dragenter", dragenter, false);
-            dropbox.addEventListener("dragover", dragover, false);
-            dropbox.addEventListener("drop", drop, false);
-        }
-    }
-};
-
+//dropdown options
 var languageLevels = {
     "Native": "3",
     "Accented": "2",
@@ -52,6 +39,23 @@ var damageTypes = {
     'tox': 'Toxic (tox)',
     'spec': 'Special (spec)'
 };
+var parryTypes = {
+    "0": "n/a",
+    "F": "F",
+    "U": "U",
+    "No": "No",
+    "-2": "-2",
+    "-1": "-1",
+    "+1": "+1",
+    "+2": "+2",
+    "-2U": "-2U",
+    "-1U": "-1U",
+    "-2F": "-2F",
+    "-1F": "-1F",
+    "other": "other"
+};
+
+//default character data
 var char = {
     st: "",
     dx: "",
@@ -87,35 +91,41 @@ var char = {
     legsDR: 0,
     feetDR: 0
 };
-var parryTypes = {
-    "0": "n/a",
-    "F": "F",
-    "U": "U",
-    "No": "No",
-    "-2": "-2",
-    "-1": "-1",
-    "+1": "+1",
-    "+2": "+2",
-    "-2U": "-2U",
-    "-1U": "-1U",
-    "-2F": "-2F",
-    "-1F": "-1F",
-    "other": "other"
-};
 
 //this will be the queue that manages all the button clicks and stuff so the logic doesn't get ahead of Firebase
 var promise = new Promise(function (resolve, reject) { resolve(); });
 
-var valueEndQuery = '</td>';
-
-var exporter = (function ()
+//this takes the data from the source and transforms it into something usable
+var GCSDataTransformController = (function ()
 {
     function Constructor() { }
     Constructor.prototype.export = function (text)
     {
         return getChar(cleanText(text));
+    };
+    function getAdvantageData(text)
+    {
+        console.log("getAdvantageData", text);
+        var returnMe = {};
+        //returnMe.name = getMatch(text, '<td class="description"  style="padding-left: 12px;" >', '(<div|' + '</td>' + ')') || "";
+        returnMe.name = getMatch(text, '<td class="description" >', '(<div|' + '</td>' + ')') || "";
+        returnMe.notes = getMatch(text, '<div class="note">', '</div>') || "";
+        returnMe.points = getMatch(text, '<td class="points">', '</td>') || "";
+        returnMe.ref = getMatch(text, '<td class="ref">', '</td>') || "";
+        returnMe.spoken = languageLevels[getMatch(returnMe.notes, "Spoken (", ")")] || null;
+        returnMe.written = languageLevels[getMatch(returnMe.notes, "Written (", ")")] || null;
+        if (returnMe.name !== "")
+        {
+            //console.log("getAdvantageData returning", returnMe);
+            return returnMe;
+        }
     }
-    ;
+    function getAttributeValue(text, query)
+    {
+        console.log("getAttributeValue", text, query);
+        var searchMe = text.slice(text.indexOf(query));
+        return getMatch(searchMe, '"rvalue">', '</td>');
+    }
     function getChar(text)
     {
         console.log("getChar");
@@ -135,6 +145,12 @@ var exporter = (function ()
         var liftingString = getTable(text, "lifting");
         var encumbranceMoveDodgeString = getTable(text, "encumbrance_move_dodge");
         var descriptionString = getTable(text, "description");
+        var re = RegExp(/<td class="title">Dodge<\/td>.*?<td class="rvalue">(\d*?)<\/td>\s*?<\/tr>/);
+        var result = encumbranceMoveDodgeString.match(re);
+        //console.log("result", result);
+        //console.log("returnMe.lift", returnMe.lift);
+        var re2 = RegExp(/<td class="label">TL:<\/td>\s*?<td class="value">(\d*?)<\/td>/);
+        returnMe.dodge = result[1];
         returnMe.name = getName(identityString);
         returnMe.st = getAttributeValue(attributesString, 'Strength (ST):');
         returnMe.dx = getAttributeValue(attributesString, 'Dexterity (DX):');
@@ -152,12 +168,6 @@ var exporter = (function ()
         returnMe.thrust = getAttributeValue(attributesString, 'thr: </span>');
         returnMe.swing = getAttributeValue(attributesString, 'sw: </span>');
         returnMe.lift = Number(getAttributeValue(liftingString, 'Basic Lift:').split(" ")[0]);
-        var re = RegExp(/<td class="title">Dodge<\/td>.*?<td class="rvalue">(\d*?)<\/td>\s*?<\/tr>/);
-        var result = encumbranceMoveDodgeString.match(re);
-        //console.log("result", result);
-        //console.log("returnMe.lift", returnMe.lift);
-        returnMe.dodge = result[1];
-        var re2 = RegExp(/<td class="label">TL:<\/td>\s*?<td class="value">(\d*?)<\/td>/);
         returnMe.tl = descriptionString.match(re2)[1];
         returnMe.skullDR = getAttributeValue(hitLocationString, 'Skull');
         returnMe.faceDR = getAttributeValue(hitLocationString, 'Face');
@@ -179,42 +189,48 @@ var exporter = (function ()
         returnMe.notes = getNotes(notesString);
         return returnMe;
     }
-    function getAdvantageData(text)
+    function getCollection(text, callback)
     {
-        console.log("getAdvantageData", text);
-        var returnMe = {};
-        //returnMe.name = getMatch(text, '<td class="description"  style="padding-left: 12px;" >', '(<div|' + valueEndQuery + ')') || "";
-        returnMe.name = getMatch(text, '<td class="description" >', '(<div|' + valueEndQuery + ')') || "";
-        returnMe.notes = getMatch(text, '<div class="note">', '</div>') || "";
-        returnMe.points = getMatch(text, '<td class="points">', valueEndQuery) || "";
-        returnMe.ref = getMatch(text, '<td class="ref">', valueEndQuery) || "";
-        returnMe.spoken = languageLevels[getMatch(returnMe.notes, "Spoken (", ")")] || null;
-        returnMe.written = languageLevels[getMatch(returnMe.notes, "Written (", ")")] || null;
-        if (returnMe.name !== "")
+        console.log("getCollection", text, callback);
+        var returnMe = [];
+        var row = text.split('</tr>');
+        row.forEach(function (column)
         {
-            //console.log("getAdvantageData returning", returnMe);
-            return returnMe;
-        }
-    }
-    function getAttributeValue(text, query)
-    {
-        console.log("getAttributeValue", text, query);
-        var searchMe = text.slice(text.indexOf(query));
-        return getMatch(searchMe, '"rvalue">', valueEndQuery);
+            var result = callback(column);
+            if (result)
+            {
+                returnMe.push(result);
+            }
+        });
+        return returnMe;
     }
     function getEquipmentData(text)
     {
         console.log("getEquipmentData");
         var returnMe = {};
-        returnMe.name = getMatch(text, '<td class="description" >', '(<div|' + valueEndQuery + ')') || "";
+        returnMe.name = getMatch(text, '<td class="description" >', '(<div|' + '</td>' + ')') || "";
         returnMe.notes = getMatch(text, '<div class="note">', '</div>') || "";
-        returnMe.state = getMatch(text, '<td class="state">', valueEndQuery) || "";
-        returnMe.quantity = getMatch(text, '<td class="quantity">', valueEndQuery) || "";
-        returnMe.cost = getMatch(text, '<td class="cost">', valueEndQuery) || "";
-        returnMe.weight = getMatch(text, '<td class="weight">', valueEndQuery) || "";
+        returnMe.state = getMatch(text, '<td class="state">', '</td>') || "";
+        returnMe.quantity = getMatch(text, '<td class="quantity">', '</td>') || "";
+        returnMe.cost = getMatch(text, '<td class="cost">', '</td>') || "";
+        returnMe.weight = getMatch(text, '<td class="weight">', '</td>') || "";
         if (returnMe.name !== "")
         {
             return returnMe;
+        }
+    }
+    function getMatch(text, startQuery, endQuery)
+    {
+        //console.log("getMatch", "text", text, "startQuery", startQuery, "endQuery", endQuery);
+        try
+        {
+            var re = new RegExp(startQuery + "(.*?)" + endQuery);
+            var returnMe = text.match(re);
+            //console.log("getMatch returning", returnMe[1]);
+            return returnMe ? returnMe[1] : null;
+        } catch (e)
+        {
+            return null;
         }
     }
     function getMeleeWeaponData(text)
@@ -224,18 +240,18 @@ var exporter = (function ()
         var returnMe = {};
         try
         {
-            damageStrings = getMatch(text, '<td class="damage">', valueEndQuery).split(" ") || "";
+            damageStrings = getMatch(text, '<td class="damage">', '</td>').split(" ") || "";
         } catch (e)
         {
             damageStrings = ["", ""];
         }
-        returnMe.block = getMatch(text, '<td class="block">', valueEndQuery) || "";
-        returnMe.description = getMatch(text, '<td class="description">', valueEndQuery) || "";
-        returnMe.level = getMatch(text, '<td class="level">', valueEndQuery) || "";
-        returnMe.parry = getMatch(text, '<td class="parry">', valueEndQuery) || "";
-        returnMe.reach = getMatch(text, '<td class="reach">', valueEndQuery) || "";
-        returnMe.strength = getMatch(text, '<td class="strength">', valueEndQuery) || "";
-        returnMe.usage = getMatch(text, '<td class="usage">', valueEndQuery) || "";
+        returnMe.block = getMatch(text, '<td class="block">', '</td>') || "";
+        returnMe.description = getMatch(text, '<td class="description">', '</td>') || "";
+        returnMe.level = getMatch(text, '<td class="level">', '</td>') || "";
+        returnMe.parry = getMatch(text, '<td class="parry">', '</td>') || "";
+        returnMe.reach = getMatch(text, '<td class="reach">', '</td>') || "";
+        returnMe.strength = getMatch(text, '<td class="strength">', '</td>') || "";
+        returnMe.usage = getMatch(text, '<td class="usage">', '</td>') || "";
         returnMe.damage = damageStrings[0];
         returnMe.damageType = damageTypes[damageStrings[1]];
         //console.log("getMeleeWeaponData returning", returnMe);
@@ -247,7 +263,7 @@ var exporter = (function ()
     function getNotes(text)
     {
         console.log("getNotes", text);
-        return getMatch(text, '<td class="description">', valueEndQuery);
+        return getMatch(text, '<td class="description">', '</td>');
     }
     function getName(text)
     {
@@ -255,7 +271,7 @@ var exporter = (function ()
         var nameFieldQuery = '<td class="label">Name:</td>';
         var nameQuery = '<td class="value">';
         text.slice(text.indexOf(nameFieldQuery));
-        return getMatch(text, nameQuery, valueEndQuery);
+        return getMatch(text, nameQuery, '</td>');
     }
     function getRangedWeaponData(text)
     {//throw Error("not implemented");
@@ -268,8 +284,8 @@ var exporter = (function ()
 
         try
         {
-            nameTLSpecialty = getMatch(text, '<td class="description".+?>', '(<div|' + valueEndQuery + ')').split("/TL");
-            rsl = getMatch(text, '<td class="relative_skill_level">', valueEndQuery).match('([a-zA-Z]+)([+-0123456789]+)');
+            nameTLSpecialty = getMatch(text, '<td class="description".+?>', '(<div|' + '</td>' + ')').split("/TL");
+            rsl = getMatch(text, '<td class="relative_skill_level">', '</td>').match('([a-zA-Z]+)([+-0123456789]+)');
             //console.log("rsl", rsl);
         }
         catch (e)
@@ -277,7 +293,7 @@ var exporter = (function ()
             returnMe.name = null;
         }
 
-        returnMe.points = getMatch(text, '<td class="points">', valueEndQuery) || "";
+        returnMe.points = getMatch(text, '<td class="points">', '</td>') || "";
 
         if (rsl)
         {
@@ -306,9 +322,9 @@ var exporter = (function ()
             }
         }
 
-        returnMe.ref = getMatch(text, '<td class="ref">', valueEndQuery) || "";
+        returnMe.ref = getMatch(text, '<td class="ref">', '</td>') || "";
         returnMe.notes = getMatch(text, '<div class="note">', '</div>') || "";
-        returnMe.level = getMatch(text, '<td class="skill_level">', valueEndQuery) || "";
+        returnMe.level = getMatch(text, '<td class="skill_level">', '</td>') || "";
 
         if (returnMe.name)
         {
@@ -327,9 +343,9 @@ var exporter = (function ()
 
         try
         {
-            name = getMatch(text, '<td class="description".+?>', '(<div|' + valueEndQuery + ')').split("/TL");
-            castTimeDuration = getMatch(text, '<td class="time">', valueEndQuery).split('<div class="secondary">');
-            rsl = getMatch(text, '<td class="relative_spell_level">', valueEndQuery).match('([a-zA-Z]+)([+-0123456789]+)');
+            name = getMatch(text, '<td class="description".+?>', '(<div|' + '</td>' + ')').split("/TL");
+            castTimeDuration = getMatch(text, '<td class="time">', '</td>').split('<div class="secondary">');
+            rsl = getMatch(text, '<td class="relative_spell_level">', '</td>').match('([a-zA-Z]+)([+-0123456789]+)');
 
             if (rsl)
             {
@@ -341,14 +357,14 @@ var exporter = (function ()
                 returnMe.name = name[0] || "";
             }
 
-            returnMe.points = getMatch(text, '<td class="points">', valueEndQuery) || "";
+            returnMe.points = getMatch(text, '<td class="points">', '</td>') || "";
             returnMe.castTime = castTimeDuration[0];
             returnMe.duration = castTimeDuration[1];
-            returnMe.cost = getMatch(text, '<td class="mana">', valueEndQuery) || "";
-            returnMe.level = getMatch(text, '<td class="spell_level">', valueEndQuery) || "";
-            returnMe.maintain = getMatch(text, '<td class="maintain">', valueEndQuery) || "";
+            returnMe.cost = getMatch(text, '<td class="mana">', '</td>') || "";
+            returnMe.level = getMatch(text, '<td class="spell_level">', '</td>') || "";
+            returnMe.maintain = getMatch(text, '<td class="maintain">', '</td>') || "";
             returnMe.notes = getMatch(text, '<div class="note">', '</div>') || "";
-            returnMe.ref = getMatch(text, '<td class="ref">', valueEndQuery) || "";
+            returnMe.ref = getMatch(text, '<td class="ref">', '</td>') || "";
         }
         catch (e)
         {
@@ -376,21 +392,6 @@ var exporter = (function ()
         console.log('getSkillDifficulty', rsl, points);
         return Number(rsl) - calcSkillBonus(points);
     }
-    function getCollection(text, callback)
-    {
-        console.log("getCollection", text, callback);
-        var returnMe = [];
-        var row = text.split('</tr>');
-        row.forEach(function (column)
-        {
-            var result = callback(column);
-            if (result)
-            {
-                returnMe.push(result);
-            }
-        });
-        return returnMe;
-    }
 
     /**
     Calculates the bonus that correlates to the number of points
@@ -410,8 +411,12 @@ var exporter = (function ()
     function cleanText(text)
     {
         console.log("cleanText", text);
-        var returnMe = text.replace(/\r\n/, '').replace(/\t/, '').replace(/>\s+</, '><').replace("'", "\'");
-        //console.log("cleanText returning", returnMe);
+        var returnMe = text
+.replace(/\r?\n|\r/g, '')
+.replace(/\t/, '')
+.replace(/>\s+</, '><')
+.replace("'", "\'");
+        console.log("cleanText returning", returnMe);
         return returnMe;
     }
     return {
@@ -422,7 +427,7 @@ var exporter = (function ()
     };
 })();
 
-var sheetTypeOneImporter = (function ()
+var sheetTypeOneController = (function ()
 {
     var selectors = {
         acc: 'input[name="attr_acc"]',
@@ -1026,7 +1031,7 @@ var sheetTypeOneImporter = (function ()
     };
 })();
 
-var sheetTypeTwoImporter = (function ()
+var sheetTypeTwoController = (function ()
 {
     var selectors = {
         acc: 'input[name="attr_acc"]',
@@ -1145,6 +1150,8 @@ var sheetTypeTwoImporter = (function ()
         weight: 'input[name="attr_wt"]',
         will: 'input[name="attr_Will"]',
         written: 'input[name="attr_written"]',
+        characterSheetTabContext: 'div.dialog.characterdialog.ui-dialog-content.ui-widget-content > div > ul > li:nth-child(2) > a',
+        characterSheetWindow: 'body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable'
     };
     function Constructor() { }
     Constructor.prototype.import = function (char)
@@ -1155,156 +1162,120 @@ var sheetTypeTwoImporter = (function ()
     {
         console.log("setupChar");
         var callbacks = [];
-        var context = getForegroundCharSheet();
-        if (confirm("overwrite?"))
-        {
-            clearForm();
-        }
+        var context;
 
-        waitForDOM(context, selectors.mainTab, null, function ()
+        waitForDOM(document, selectors.characterSheetWindow, null, function ()
         {
-            //console.log('setupChar part 2');
-            context.querySelector(selectors.mainTab).click();
-            waitForDOM(context, selectors.mainTab, null, function ()
+            setTimeout(function ()
             {
-                promise.then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        main(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("main tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    skills(context, char);
-                    return new Promise(function (resolve, reject)
-                    {
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("skill tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        traits(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("traits tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        inventory(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("inventory tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        powers(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("power tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        various(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("various tab data entry resolving at ", Date.now());
-                        }, 2000);
-                    })
-                }).then(function (val)
-                {
-                    return new Promise(function (resolve, reject)
-                    {
-                        enterName(context, char);
-                        setTimeout(function ()
-                        {
-                            resolve();
-                            console.log("name entry resolved at ", Date.now());
-                        }, 2000);
-                    })
-                })
+                context = getForegroundCharSheet();
 
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        main(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        skills(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        traits(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        inventory(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        powers(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        various(context, char, callbacks);
-                //    }, 200);
-                //});
-                //callbacks.push(function (callbacks)
-                //{
-                //    setTimeout(function ()
-                //    {
-                //        enterName(context, char.name, callbacks);
-                //    }, 200);
-                //});
+                if (confirm("overwrite?"))
+                {
+                    clearForm();
+                }
 
-                //_execNextCallback(callbacks);
-            });
+                waitForDOM(context, selectors.characterSheetTabContext, null, function ()
+                {
+                    setTimeout(function ()
+                    {
+                        context.querySelector(selectors.characterSheetTabContext).click();
+
+                        waitForDOM(context, selectors.mainTab, null, function ()
+                        {
+                            context.querySelector(selectors.mainTab).click();
+                            waitForDOM(context, selectors.mainTab, null, function ()
+                            {
+                                promise.then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        main(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("main tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    skills(context, char);
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("skill tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        traits(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("traits tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        inventory(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("inventory tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        powers(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("power tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        various(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("various tab data entry resolving at ", Date.now());
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterName(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                            console.log("name entry resolved at ", Date.now());
+                                        }, 2000);
+                                    })
+                                })
+                            });
+                        });
+                    }, 500);
+                });
+            }, 500);
         });
     }
     function getForegroundCharSheet()
     {
         //this gets every sheet that has been clicked, even if they are not visible, because they stay in markup
         var sheetsInMarkup = document.querySelectorAll("[data-characterid]");
-        //console.log("sheets", sheetsInMarkup);
+        console.log("sheets", sheetsInMarkup);
         var context = null;
         var highestZ = -1;
 
@@ -1316,8 +1287,8 @@ var sheetTypeTwoImporter = (function ()
 
                 if (parent.style.zIndex > highestZ)
                 {
-                    //console.log("sheet.style.zIndex", parent.style.zIndex);
-                    //console.log("highestZ", highestZ);
+                    console.log("sheet.style.zIndex", parent.style.zIndex);
+                    console.log("highestZ", highestZ);
 
                     context = parent;
                     highestZ = parent.style.zIndex;
@@ -1325,7 +1296,7 @@ var sheetTypeTwoImporter = (function ()
             }
         });
 
-        //console.log("getForegroundCharSheet returning", context);
+        console.log("getForegroundCharSheet returning", context);
         return context;
     }
 
@@ -1489,7 +1460,7 @@ var sheetTypeTwoImporter = (function ()
         updateValue(context, selectors.skill, item.level);
         updateValue(context, selectors.type, item.damageType);
     }
-    function enterName(context, name)
+    function enterName(context, char)
     {
         context.querySelector(selectors.bioInfo).click();
         context.querySelector(selectors.editButton).click();
@@ -1497,7 +1468,7 @@ var sheetTypeTwoImporter = (function ()
         var editContext = getForegroundCharSheet();
         waitForDOM(editContext, 'input.name', null, function ()
         {
-            editContext.querySelector('input.name').value = name;
+            editContext.querySelector('input.name').value = char.name;
             editContext.querySelector('button.ui-button.ui-widget.ui-state-default.ui-corner-all.ui-button-text-only[type="button"][role="button"][aria-disabled="false"]').click();
         });
     }
@@ -1576,9 +1547,6 @@ var sheetTypeTwoImporter = (function ()
             });
         });
     }
-    /**
-    need to focus on the item to cause firebase to update
-    */
     function inventory(context, char)
     {
         console.log("enterInventory", context, char);
@@ -1710,6 +1678,7 @@ var sheetTypeTwoImporter = (function ()
     function various(context, char)
     {
         console.log("various", "context", context);
+        //todo
         //updateValue(context, selectors.race, char.);
         //updateValue(context, selectors.gender, char.);
         //updateValue(context, selectors.handedness, char.);
@@ -1734,6 +1703,117 @@ var sheetTypeTwoImporter = (function ()
             return new Constructor();
         }
     };
+})();
+
+var fileUploadController = (function ()
+{
+    function Constructor() { }
+    //setup some events and the dropzone
+    Constructor.prototype.init = function ()
+    {
+        setupDropzone('#journalfolderroot > ol > li:nth-child(1) > ol',
+            function (context) { console.log("visual change here"); },
+            function (context) { console.log("visual change here"); },
+            drop);
+    }
+    function setupDropzone(context, enterCallback, overCallback, dropCallback)
+    {
+        var dropbox;
+        dropbox = document.querySelector(context);
+        dropbox.addEventListener("dragenter", enterCallback, false);
+        dropbox.addEventListener("dragover", overCallback, false);
+        dropbox.addEventListener("drop", dropCallback, false);
+    }
+
+    return {
+        getInstance: function ()
+        {
+            return new Constructor();
+        }
+    };
+    function drop(e)
+    {
+        console.log("drop", e);
+
+        var blobHandler = BlobHandler.getInstance();
+        var dt = e.dataTransfer;
+        var files = dt.files;
+
+        e.stopPropagation();
+        e.preventDefault();
+
+        blobHandler.handleFileSelection(files, function (data)
+        {
+            parseFile(data.srcElement.result);
+        });
+    }
+    function parseFile(text)
+    {
+        if (detectSource(text) === 'GCS')
+        {
+            var dtc = GCSDataTransformController.getInstance();
+            var char = dtc.export(text);
+            addCharacter();
+
+            setTimeout(function ()
+            {
+                if (confirm("Ok for Type 2 sheet, Cancel for Type 1 sheet"))
+                {
+                    sheetTypeTwoController.getInstance().import(char);
+                }
+                else
+                {
+                    sheetTypeOneController.getInstance().import(char);
+                }
+            }, 1000);
+        }
+        else
+        {
+            console.log("file format not supported");
+            alert("file format not supported");
+        }
+    }
+    //click the add character button and then click save changes
+    function addCharacter()
+    {
+        var contentDiv = document.querySelector('#journal > div:nth-child(2)'),
+        characterPopout = document.querySelector('div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons'),
+        addButton = '.superadd',
+        addCharacter = '#addnewcharacter',
+        saveChanges = 'div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons > div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > div > button:nth-child(1)';
+
+        waitForDOM(contentDiv, addButton, null, function ()
+        {
+            document.querySelector(addButton).click();
+
+            waitForDOM(contentDiv, addCharacter, null, function ()
+            {
+                document.querySelector(addCharacter).click();
+
+                waitForDOM(document, saveChanges, null, function ()
+                {
+                    setTimeout(function ()
+                    {
+                        document.querySelector(saveChanges).click();
+                    }, 1000);
+                });
+            });
+        });
+    }
+    //determine which program generated the input, GCS, GCA, or gCalc
+    function detectSource(data)
+    {
+        console.log("detectSource", "data", data);
+        var text = data.substring(0, 300);
+        if (text.indexOf('Richard A. Wilkes') > -1)
+        {
+            return 'GCS';
+        }
+        else
+        {
+            return null;
+        }
+    }
 })();
 
 function clearSection(tab, selector)
@@ -1764,20 +1844,6 @@ function clearSection(tab, selector)
         });
         editButton.click();
     });
-}
-function getMatch(text, startQuery, endQuery)
-{
-    //console.log("getMatch", "text", text, "startQuery", startQuery, "endQuery", endQuery);
-    try
-    {
-        var re = new RegExp(startQuery + "(.*?)" + endQuery);
-        var returnMe = text.match(re);
-        //console.log("getMatch returning", returnMe[1]);
-        return returnMe ? returnMe[1] : null;
-    } catch (e)
-    {
-        return null;
-    }
 }
 function waitForDOM(context, selector, testCallback, doneCallback, endTime)
 {
@@ -1966,6 +2032,7 @@ var BlobHandler = (function ()
         function _startFileRead(fileObject, handler)
         {
             var reader = new FileReader();
+            console.log("fileObject ", fileObject);
 
             // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
             reader.onloadend = handler; // "onloadend" fires when the file contents have been successfully loaded into memory.
@@ -2041,7 +2108,7 @@ var BlobHandler = (function ()
 
                 // Assert: we have a valid file.
 
-                this._startFileRead(file, handler);
+                _startFileRead(file, handler);
                 //document.getElementById('hideWrapper').style.display = 'none'; // Remove the file picker dialog from the screen since we have a valid file.
             },
             loadFile: function (name, callback)
@@ -2089,38 +2156,23 @@ var BlobHandler = (function ()
         }
     };
 })();
-function drop(e)
-{
-    var blobHandler = BlobHandler.getInstance();
-    e.stopPropagation();
-    e.preventDefault();
 
-    var dt = e.dataTransfer;
-    var files = dt.files;
-
-    console.log("dt", dt);
-    console.log("files", files);
-
-    blobHandler.handleFileSelection(files);
-}
 (function ()
 {
-    console.log("starting import");
-    var text = '<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><!--***** BEGIN LICENSE BLOCK *****Copyright (c) 1998-2016 by Richard A. Wilkes. All rights reserved.This Source Code Form is subject to the terms of the Mozilla Public License,version 2.0. If a copy of the MPL was not distributed with this file, Youcan obtain one at http://mozilla.org/MPL/2.0/.This Source Code Form is "Incompatible With Secondary Licenses", as definedby the Mozilla Public License, version 2.0.***** END LICENSE BLOCK *****--><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8" /><title>Jeffrey Combs</title><style type="text/css" title="text/css">        /* <![CDATA[ */        body        {        color: black;        background-color: white;        font: normal 7pt/9pt \'Lucida Sans\',\'Arial\',sans-serif;        margin: 4pt;        }                table, tbody, tr, td        {        margin: 0;        border-spacing: 0;        border-collapse: collapse;        font: normal 7pt/9pt \'Lucida Sans\',\'Arial\',sans-serif;        }                table, tbody, tr { padding: 0; }                td        {        padding: 1pt 1pt 0 1pt;        vertical-align: top;        white-space: nowrap;        }                .note        {        font: normal 6pt/8pt \'Lucida Sans\',\'Arial\',sans-serif;        color: gray;        display: block-inline;        white-space: normal;        }                .secondary { display: block; }        .top_info { margin: 0; }        .list, .info { margin: 2pt 0 0 0; }                .list, .info, .top_info        {        width: 100%;        border: 1pt solid black;        }                #advantages { width: 270pt; }        #skills { width: 269pt; }        #spells, #melee_weapons, #ranged_weapons, #equipment, #notes, #copyright { width: 540pt; }                .list td { border: 1pt solid black; }        .odd { background-color: #FFF; }        .even { background-color: #E8FFE8; }        #encumbrance_move_dodge td, #hit_location td, #description td.label { border-left: 1pt solid black; }        #copyright {        color: gray;         font: italic 7pt/9pt \'Lucida Sans\',\'Arial\',sans-serif;         text-align: center;         white-space: normal;         margin: 4pt;        }        .top_border { border-top: 1pt solid black; }                .title        {        border: 1pt solid black;        background-color: silver;        color: black;        text-align: center;        }                .description, .value, .rvalue, .natural_damage { width: 100%; }        .quantity, .cost, .weight, .cost_summary, .weight_summary, .ref, .level, .accuracy, .damage, .range, .rof, .shots, .bulk, .recoil, .strength, .block, .reach, .points, .spell_level, .relative_spell_level, .skill_level, .relative_skill_level, .rvalue { text-align: right; }        .state, .parry, .natural_damage { text-align: center; }                .wrapper        {        width: 540pt;        border: none;        }                .wrapper > tbody > tr > td { padding: 0; }        .spacer { width: 2pt; }        .rowspacer1 { padding: 1pt 0 0 0; }        .rowspacer2 { padding: 2pt 0 0 0; }        .rowspacer3 { padding: 3pt 0 0 0; }        .rowspacer4 { padding: 4pt 0 0 0; }        .rowspacer5 { padding: 5pt 0 0 0; }                .clabel { text-align: center; }        .label { text-align: right; }                .label, .clabel        {        color: gray;        background-color: inherit;        }                .encumbrance        {        background-color: #FCF2C4;        color: inherit;        }                #portrait        {        width: 60pt;        height: 80pt;        }                td.portrait { width: 60pt; }                td.portrait_cell        {        padding: 0;        background-color: black;        }                /* ]]> */</style></head><body><table class="wrapper"><tr><td class="portrait" rowspan="2"><table class="top_info"><tr><td class="title">Portrait</td></tr><tr><td class="portrait_cell"><img id="portrait" src="Jeffrey%20Combs.png" alt="Portrait"/></td></tr></table></td><td class="spacer" rowspan="2"></td><td><table id="identity" class="top_info"><tr><td class="title" colspan="2">Identity</td></tr><tr><td class="label">Name:</td><td class="value">Jeffrey Combs</td></tr><tr><td class="label">Title:</td><td class="value"></td></tr><tr><td class="label">Religion:</td><td class="value"></td></tr></table></td><td class="spacer"></td><td><table id="player_info" class="top_info"><tr><td class="title" colspan="2">Player Information</td></tr><tr><td class="label">Player:</td><td class="value"></td></tr><tr><td class="label">Campaign:</td><td class="value"></td></tr><tr><td class="label">Created On:</td><td class="value">Nov 7, 2183</td></tr></table></td><td class="spacer" rowspan="2"></td><td rowspan="2"><table id="points" class="top_info"><tr><td class="title" colspan="2">230 Points</td></tr><tr><td class="label">Attributes:</td><td class="rvalue">105</td></tr><tr><td class="label">Advantages:</td><td class="rvalue">67</td></tr><tr><td class="label">Disadvantages:</td><td class="rvalue">-20</td></tr><tr><td class="label">Quirks:</td><td class="rvalue">0</td></tr><tr><td class="label">Skills:</td><td class="rvalue">30</td></tr><tr><td class="label">Spells:</td><td class="rvalue">48</td></tr><tr><td class="label">Race:</td><td class="rvalue">0</td></tr><tr><td class="rowspacer2" colspan="2"></td></tr><tr class="top_border"><td class="rowspacer1" colspan="2"></td></tr><tr><td class="label">Earned:</td><td class="rvalue">0</td></tr><tr><td class="rowspacer1" colspan="2"></td></tr></table></td></tr><tr><td colspan="3"><table id="description" class="info"><tr><td class="title" colspan="6">Description</td></tr><tr><td class="label">Race:</td><td class="value"></td><td class="label">Height:</td><td class="value">0&quot;</td><td class="label">Hair:</td><td class="value"></td></tr><tr><td class="label">Gender:</td><td class="value"></td><td class="label">Weight:</td><td class="value">0 lb</td><td class="label">Eyes:</td><td class="value"></td></tr><tr><td class="label">Age:</td><td class="value">0</td><td class="label">Size:</td><td class="value">+0</td><td class="label">Skin:</td><td class="value"></td></tr><tr><td class="label">Birthday:</td><td class="value"></td><td class="label">TL:</td><td class="value">8</td><td class="label">Hand:</td><td class="value"></td></tr></table></td></tr></table><table class="wrapper"><tr><td rowspan="2"><table id="attributes" class="info"><tr><td class="title" colspan="2">Attributes</td></tr><tr><td class="label">Strength (ST):</td><td class="rvalue">10</td></tr><tr><td class="label">Dexterity (DX):</td><td class="rvalue">11</td></tr><tr><td class="label">Intelligence (IQ):</td><td class="rvalue">13</td></tr><tr><td class="label">Health (HT):</td><td class="rvalue">11</td></tr><tr class="top_border"><td class="label">Will:</td><td class="rvalue">16</td></tr><tr><td class="label">Fright Check:</td><td class="rvalue">16</td></tr><tr class="top_border"><td class="label">Basic Speed:</td><td class="rvalue">5.5</td></tr><tr><td class="label">Basic Move:</td><td class="rvalue">5</td></tr><tr class="top_border"><td class="label">Perception:</td><td class="rvalue">13</td></tr><tr><td class="label">Vision:</td><td class="rvalue">13</td></tr><tr><td class="label">Hearing:</td><td class="rvalue">13</td></tr><tr><td class="label">Taste &amp; Smell:</td><td class="rvalue">13</td></tr><tr><td class="label">Touch:</td><td class="rvalue">13</td></tr><tr class="top_border"><td class="natural_damage" colspan="2"><span class="label">thr: </span>1d-2<span class="label">, sw: </span>1d</td></tr><tr><td class="rowspacer2" colspan="2"></td></tr></table></td><td class="spacer" rowspan="2"></td><td><table id="encumbrance_move_dodge" class="info"><tr><td class="title" colspan="4">Encumbrance, Move &amp; Dodge</td></tr><tr><td class="title">Level</td><td class="title">Max Load</td><td class="title">Move</td><td class="title">Dodge</td></tr><tr  class="encumbrance" ><td class="label">&#8226; None (0)</td><td class="rvalue">20 lb</td><td class="rvalue">5</td><td class="rvalue">9</td></tr><tr ><td class="label">Light (1)</td><td class="rvalue">40 lb</td><td class="rvalue">4</td><td class="rvalue">8</td></tr><tr ><td class="label">Medium (2)</td><td class="rvalue">60 lb</td><td class="rvalue">3</td><td class="rvalue">7</td></tr><tr ><td class="label">Heavy (3)</td><td class="rvalue">120 lb</td><td class="rvalue">2</td><td class="rvalue">6</td></tr><tr ><td class="label">X-Heavy (4)</td><td class="rvalue">200 lb</td><td class="rvalue">1</td><td class="rvalue">5</td></tr></table></td><td class="spacer" rowspan="2"></td><td rowspan="2"><table id="hit_location" class="info"><tr><td class="title" colspan="4">Hit Location</td></tr><tr><td class="title">Roll</td><td class="title">Where</td><td class="title">-</td><td class="title">DR</td></tr><tr><td class="clabel">-</td><td class="clabel">Eye</td><td class="label">-9</td><td class="rvalue">0</td></tr><tr><td class="clabel">3-4</td><td class="clabel">Skull</td><td class="label">-7</td><td class="rvalue">2</td></tr><tr><td class="clabel">5</td><td class="clabel">Face</td><td class="label">-5</td><td class="rvalue">0</td></tr><tr><td class="clabel">6-7</td><td class="clabel">R. Leg</td><td class="label">-2</td><td class="rvalue">0</td></tr><tr><td class="clabel">8</td><td class="clabel">R. Arm</td><td class="label">-2</td><td class="rvalue">0</td></tr><tr><td class="clabel">9-10</td><td class="clabel">Torso</td><td class="label">0</td><td class="rvalue">0</td></tr><tr><td class="clabel">11</td><td class="clabel">Groin</td><td class="label">-3</td><td class="rvalue">0</td></tr><tr><td class="clabel">12</td><td class="clabel">L. Arm</td><td class="label">-2</td><td class="rvalue">0</td></tr><tr><td class="clabel">13-14</td><td class="clabel">L. Leg</td><td class="label">-2</td><td class="rvalue">0</td></tr><tr><td class="clabel">15</td><td class="clabel">Hand</td><td class="label">-4</td><td class="rvalue">0</td></tr><tr><td class="clabel">16</td><td class="clabel">Foot</td><td class="label">-4</td><td class="rvalue">0</td></tr><tr><td class="clabel">17-18</td><td class="clabel">Neck</td><td class="label">-5</td><td class="rvalue">0</td></tr><tr><td class="clabel">-</td><td class="clabel">Vitals</td><td class="label">-3</td><td class="rvalue">0</td></tr><tr><td class="rowspacer4"></td><td class="rowspacer4"></td><td class="rowspacer4"></td><td class="rowspacer4"></td></tr></table></td><td class="spacer" rowspan="2"></td><td rowspan="2"><table id="fp_hp" class="info"><tr><td class="title" colspan="2">Fatigue/Hit Points</td></tr><tr><td class="label">Current FP:</td><td class="rvalue"></td></tr><tr><td class="label">Basic FP:</td><td class="rvalue">11</td></tr><tr><td class="rowspacer1" colspan="2"></td></tr><tr class="top_border"><td class="label">Tired:</td><td class="rvalue">3</td></tr><tr><td class="label">Collapse:</td><td class="rvalue">0</td></tr><tr><td class="label">Unconscious:</td><td class="rvalue">-11</td></tr><tr><td class="rowspacer1" colspan="2"></td></tr><tr class="top_border"><td class="label">Current HP:</td><td class="rvalue"></td></tr><tr><td class="label">Basic HP:</td><td class="rvalue">10</td></tr><tr><td class="rowspacer1" colspan="2"></td></tr><tr class="top_border"><td class="label">Reeling:</td><td class="rvalue">3</td></tr><tr><td class="label">Collapse:</td><td class="rvalue">0</td></tr><tr><td class="label">Check #1:</td><td class="rvalue">-10</td></tr><tr><td class="label">Check #2:</td><td class="rvalue">-20</td></tr><tr><td class="label">Check #3:</td><td class="rvalue">-30</td></tr><tr><td class="label">Check #4:</td><td class="rvalue">-40</td></tr><tr><td class="label">Dead:</td><td class="rvalue">-50</td></tr></table></td></tr><tr><td><table id="lifting" class="info"><tr><td class="title" colspan="2">Lifting &amp; Moving Things</td></tr><tr><td class="label">Basic Lift:</td><td class="rvalue">20 lb</td></tr><tr><td class="label">One-Handed Lift:</td><td class="rvalue">40 lb</td></tr><tr><td class="label">Two-Handed Lift:</td><td class="rvalue">160 lb</td></tr><tr><td class="label">Shove &amp; Knock Over:</td><td class="rvalue">240 lb</td></tr><tr><td class="label">Running Shove &amp; Knock Over:</td><td class="rvalue">480 lb</td></tr><tr><td class="label">Carry On Back:</td><td class="rvalue">300 lb</td></tr><tr><td class="label">Shift Slightly:</td><td class="rvalue">1,000 lb</td></tr></table></td></tr></table><table class="wrapper"><tr><td><table id="advantages" class="list"><tr><td class="title">Advantages &amp; Disadvantages</td><td class="title">Pts</td><td class="title">Ref</td></tr><tr class="odd"><td class="description" >Extra Fatigue Points 10<div class="note">Magic Only (Subject to involuntary FP drain), -10%.</div></td><td class="points">27</td><td class="ref">B16</td></tr><tr class="even"><td class="description" >Language: English<div class="note">Spoken (Accented), +2; Written (Broken), +1.</div></td><td class="points">3</td><td class="ref">B24</td></tr><tr class="odd"><td class="description" >Language: Ia<div class="note">Spoken (Broken), +1; Written (Broken), +1.</div></td><td class="points">2</td><td class="ref">B24</td></tr><tr class="even"><td class="description" >Language: Spanish<div class="note">Native, -6; Spoken (Native), +3; Written (Native), +3.</div></td><td class="points">0</td><td class="ref">B24</td></tr><tr class="odd"><td class="description" >Loner<div class="note">CR: 12 (Resist Quite Often), -2 Reaction Penalty.</div><div class="note">You require a great deal of &#8220;personal space.&#8221; Make a self-control roll whenever anyone lingers nearby, watches  over your shoulder, etc. If you fail, you lash out at that person</div></td><td class="points">-5</td><td class="ref">B142</td></tr><tr class="even"><td class="description" >Magery 3</td><td class="points">35</td><td class="ref">B66</td></tr><tr class="odd"><td class="description" >Obsession<div class="note">Long term, -10.</div><div class="note">Bring Yog-Sothoth to my house for tea and biscuits.</div></td><td class="points">-10</td><td class="ref">B146</td></tr><tr class="even"><td class="description" >Pyrophobia (Fire)<div class="note">CR: 12 (Resist Quite Often).</div></td><td class="points">-5</td><td class="ref">B150</td></tr></table></td><td class="spacer"></td><td><table id="skills" class="list"><tr><td class="title">Skills</td><td class="title">SL</td><td class="title">RSL</td><td class="title">Pts</td><td class="title">Ref</td></tr><tr class="odd"><td class="description" >Area Knowledge (Dunwich)</td><td class="skill_level">13</td><td class="relative_skill_level">IQ+0</td><td class="points">1</td><td class="ref">B176</td></tr><tr class="even"><td class="description" >Breath Control</td><td class="skill_level">10</td><td class="relative_skill_level">HT-1</td><td class="points">2</td><td class="ref">B182</td></tr><tr class="odd"><td class="description" >Computer Operation/TL8</td><td class="skill_level">13</td><td class="relative_skill_level">IQ+0</td><td class="points">1</td><td class="ref">B184</td></tr><tr class="even"><td class="description" >Dreaming</td><td class="skill_level">14</td><td class="relative_skill_level">Will-2</td><td class="points">1</td><td class="ref">B188</td></tr><tr class="odd"><td class="description" >Fast-Talk</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B195</td></tr><tr class="even"><td class="description" >Forced Entry</td><td class="skill_level">11</td><td class="relative_skill_level">DX+0</td><td class="points">1</td><td class="ref">B196</td></tr><tr class="odd"><td class="description" >Hidden Lore (Ia)</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B199</td></tr><tr class="even"><td class="description" >Holdout</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B200</td></tr><tr class="odd"><td class="description" >Interrogation</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B202</td></tr><tr class="even"><td class="description" >Knife</td><td class="skill_level">11</td><td class="relative_skill_level">DX+0</td><td class="points">1</td><td class="ref">B208</td></tr><tr class="odd"><td class="description" >Knot-Tying</td><td class="skill_level">11</td><td class="relative_skill_level">DX+0</td><td class="points">1</td><td class="ref">B203</td></tr><tr class="even"><td class="description" >Literature</td><td class="skill_level">11</td><td class="relative_skill_level">IQ-2</td><td class="points">1</td><td class="ref">B205</td></tr><tr class="odd"><td class="description" >Mathematics/TL8 (Applied)</td><td class="skill_level">11</td><td class="relative_skill_level">IQ-2</td><td class="points">1</td><td class="ref">B207</td></tr><tr class="even"><td class="description" >Meditation</td><td class="skill_level">14</td><td class="relative_skill_level">Will-2</td><td class="points">1</td><td class="ref">B207</td></tr><tr class="odd"><td class="description" >Occultism</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B212</td></tr><tr class="even"><td class="description" >Religious Ritual (Ia)<div class="note">Default: Ritual Magic (Ia) - 6</div></td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">2</td><td class="ref">B217</td></tr><tr class="odd"><td class="description" >Research/TL8<div class="note">Default: Writing - 3</div></td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B217</td></tr><tr class="even"><td class="description" >Ritual Magic (Ia)</td><td class="skill_level">11</td><td class="relative_skill_level">IQ-2</td><td class="points">2</td><td class="ref">B218</td></tr><tr class="odd"><td class="description" >Shadowing</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B219</td></tr><tr class="even"><td class="description" >Smuggling</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B221</td></tr><tr class="odd"><td class="description" >Stealth</td><td class="skill_level">11</td><td class="relative_skill_level">DX+0</td><td class="points">2</td><td class="ref">B222</td></tr><tr class="even"><td class="description" >Survival (Jungle)</td><td class="skill_level">12</td><td class="relative_skill_level">Per-1</td><td class="points">1</td><td class="ref">B223</td></tr><tr class="odd"><td class="description" >Swimming</td><td class="skill_level">11</td><td class="relative_skill_level">HT+0</td><td class="points">1</td><td class="ref">B224</td></tr><tr class="even"><td class="description" >Symbol Drawing (Ia)</td><td class="skill_level">11</td><td class="relative_skill_level">IQ-2</td><td class="points">1</td><td class="ref">B224</td></tr><tr class="odd"><td class="description" >Thaumatology</td><td class="skill_level">13</td><td class="relative_skill_level">IQ+0</td><td class="points">1</td><td class="ref">B225</td></tr><tr class="even"><td class="description" >Writing</td><td class="skill_level">12</td><td class="relative_skill_level">IQ-1</td><td class="points">1</td><td class="ref">B228</td></tr></table></td></tr></table><table id="spells" class="list"><tr><td class="title">Spells</td><td class="title">Class</td><td class="title">Mana Cost</td><td class="title">Time</td><td class="title">SL</td><td class="title">RSL</td><td class="title">Pts</td><td class="title">Ref</td></tr><tr class="odd"><td class="description" >Bind Servitor<div class="note">Call a supernatural creature to the caster, and  bind that creature to prevent him from harming the summoner in any way. Also compel the creature to obey one specific command of finite duration</div></td><td class="spell_class">Regular                <div class="secondary">Mythos</div></td><td class="mana">20                <div class="secondary"></div></td><td class="time">1 Minute                <div class="secondary">1 Day</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">4</td><td class="ref">M58</td></tr><tr class="even"><td class="description" >Borrow Language<div class="note">Caster gains a language at the subject&#8217;s comprehension level or Accented &#8211; whichever is less. The subject must know the language in question.</div></td><td class="spell_class">Regular                <div class="secondary">Communication</div></td><td class="mana">3                <div class="secondary">1</div></td><td class="time">3 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M46</td></tr><tr class="odd"><td class="description" >Call/Dismiss Yog-Sothoth<div class="note">Cause one of the Great Old Ones to manifest physically on planet Earth.  Base skill penalty is -20. However, this roll can be raised by 1 for every point of Fatigue invested in the casting. The caster can be assisted by a number of helpers, who may transfer one point of Fatigue to the caster through chanting. At the end of the ritual, whether or not it succeeds, the caster permanently loses one point of Will. He also makes a Fright Check at -10. If the ritual was correctly prepared and the skill roll was successful, the deity will appear. The caster and everybody else present must make a Fright Check appropriate to the deity in question.   The base roll to dismiss a called deity is -(10 + the deity\'s Fright Check modifier). Once again, this base score can be increased by 1 per Fatigue point spent, which can include Fatigue from helpers. </div></td><td class="spell_class">Regular                <div class="secondary">Mythos</div></td><td class="mana">Var                <div class="secondary"></div></td><td class="time">1 Minute/FP                <div class="secondary">Instant</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">4</td><td class="ref"></td></tr><tr class="even"><td class="description" >Clumsiness<div class="note">The subject suffers -1 to his DX and DX-based skills for every point of energy put into the spell</div></td><td class="spell_class">Regular                <div class="secondary">Body Control</div></td><td class="mana">1-5                <div class="secondary">Half</div></td><td class="time">1 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M36</td></tr><tr class="odd"><td class="description" >Compel Truth<div class="note">The subject becomes unable to lie, though he may keep silent or tell partial truths (this must be roleplayed). The spell does not force him to volunteer information; he merely cannot say anything he believes to be untrue.</div></td><td class="spell_class">Info                <div class="secondary">Communication</div></td><td class="mana">4                <div class="secondary">2</div></td><td class="time">1 sec                <div class="secondary">5 min</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M47</td></tr><tr class="even"><td class="description" >Control Gate<div class="note">Forces an open gate to close, a closed gate to open, or tilts and  displaces the subject gate as the caster wishes. Closing a permanent gate does not destroy it; closing a temporary one does (to destroy a permanent gate, use Remove Enchantment). This spell moves gates at up to 3 yards per second. Control Gate can also be used to &#8220;choose&#8221; a particular destination of a multiple-destination Gate (see Create Gate). Once control is relinquished, the Gate reverts to its &#8220;programmed&#8221; state, moving back to its original place at top speed and by the shortest path. If several Control Gate spells are active at once on a single Gate, the latter resists them with a single roll, control going to the spell with the largest margin of success</div></td><td class="spell_class">Regular                <div class="secondary">Gate</div></td><td class="mana">6                <div class="secondary">Half</div></td><td class="time">10 sec                <div class="secondary">1 min</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M85</td></tr><tr class="odd"><td class="description" >Control Zombie<div class="note">Take control of an undead creature raised with the Zombie spell by some other wizard. If the caster wins a Quick Contest of Spells with the original Zombie spell, the undead in question will obey the caster as if he had raised it. The Zombie spell resists at +2 if the original caster is within 100 yards, and at -2 if he is dead</div></td><td class="spell_class">Regular                <div class="secondary">Necromancy</div></td><td class="mana">3                <div class="secondary"></div></td><td class="time">1 sec                <div class="secondary">Permanent</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M152</td></tr><tr class="even"><td class="description" >Daze<div class="note">The subject looks and acts normal, but does not notice what is going on around him, or remember it later. Any injury, or successful resistance to a spell, causes the subject to snap out of the daze and return to full alert status</div></td><td class="spell_class">Regular                <div class="secondary">Mind Control</div></td><td class="mana">3                <div class="secondary">2</div></td><td class="time">2 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M134</td></tr><tr class="odd"><td class="description" >Death Vision<div class="note">The subject sees a vivid apparition of his own death. This might be a vision of the future or a false vision from another possible future &#8211; but it is always chilling. The subject is mentally stunned until he can make his IQ roll to shake off the effects of the spell. This spell can also be useful to the subject, by pointing out a possibly deadly hazard</div></td><td class="spell_class">Regular                <div class="secondary">Necromancy</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">3 sec                <div class="secondary">1 sec</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M149</td></tr><tr class="even"><td class="description" >Detect Magic<div class="note">Determines whether any one object is magical. If the spell is successful, a second casting tells whether the magic is temporary or permanent. </div></td><td class="spell_class">Regular                <div class="secondary">Knowledge</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">5 sec                <div class="secondary">Instant</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M101</td></tr><tr class="odd"><td class="description" >Fear<div class="note">The subject(s) feel fright. The caster receives a +3 bonus to reaction rolls in potential combat situations and other situations where threats are effective, but suffers a -3 penalty on loyalty rolls and situations where terrorizing NPCs is counterproductive.</div></td><td class="spell_class">Area                <div class="secondary">Mind Control</div></td><td class="mana">1                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">10 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M134</td></tr><tr class="even"><td class="description" >Foolishness<div class="note">The subject suffers -1 to his IQ and IQ-based skills (including spells) for every point of energy put into the spell. The GM may also require an IQ roll to remember complex things while under the influence of this spell.</div></td><td class="spell_class">Regular                <div class="secondary">Mind Control</div></td><td class="mana">1-5                <div class="secondary">Half</div></td><td class="time">1 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M134</td></tr><tr class="odd"><td class="description" >Identify Spell<div class="note">Identifies which spells have just been cast (within the last five seconds), or are being cast at the moment, on or by the subject. One casting identifies all spells cast on or by the subject. </div></td><td class="spell_class">Info                <div class="secondary">Knowledge</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M102</td></tr><tr class="even"><td class="description" >Itch<div class="note">Causes the subject to itch fiercely in a spot of the caster&#8217;s choice. The subject is at -2 DX until he takes one full second to scratch (more, if armor, etc. is in the way!). Only one Itch spell can affect a given subject at a time</div></td><td class="spell_class">Regular                <div class="secondary">Body Control</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Until scratched</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M35</td></tr><tr class="odd"><td class="description" >Lend Energy<div class="note">Restores the subject&#8217;s lost Fatigue Points, at an energy cost to the caster. Cannot increase the subject&#8217;s FP score above its normal maximum</div></td><td class="spell_class">Regular                <div class="secondary">Healing</div></td><td class="mana">1/pt                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Permanent</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M89</td></tr><tr class="even"><td class="description" >Lend Language<div class="note">Subject gains a language (sapient creatures only) at the caster&#8217;s comprehension level or Accented &#8211; whichever is less. The caster must know the language in question</div></td><td class="spell_class">Regular                <div class="secondary">Communication</div></td><td class="mana">3                <div class="secondary">1</div></td><td class="time">3 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M46</td></tr><tr class="odd"><td class="description" >Lend Vitality<div class="note">Temporarily restores the subject&#8217;s lost Hit Points, at an energy cost to the caster. Cannot increase the subject&#8217;s HP score above its normal maximum. Since restored HP vanish after one hour and the spell cannot be maintained, this spell is only a stopgap measure.</div></td><td class="spell_class">Regular                <div class="secondary">Healing</div></td><td class="mana">1/pt                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">1 hour</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M89</td></tr><tr class="even"><td class="description" >Mind-Reading<div class="note">Read a subject&#8217;s mind. Works on any living being, but is most useful on sapient creatures. Detects only surface thoughts (what the subject is thinking at that moment). This spell will not work on sleeping or unconscious subjects. The subject is not aware his mind is being read, except in the case of a critical failure</div></td><td class="spell_class">Regular                <div class="secondary">Communication</div></td><td class="mana">4                <div class="secondary">2</div></td><td class="time">10 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M46</td></tr><tr class="odd"><td class="description" >Paralyze Limb<div class="note">The caster must strike the subject on alimb to trigger this spell (hits elsewhere have no effect). Armor does not protect. Resolve resistance on contact. If the subject fails to resist, the subject&#8217;s limb is paralyzed; it is considered crippled for one minute</div></td><td class="spell_class">Melee                <div class="secondary">Body Control</div></td><td class="mana">3                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M40</td></tr><tr class="even"><td class="description" >Recover Energy<div class="note">Rest and recover Fatigue Points more quickly than normal by drawing energy from the mana around him. A normal person recovers 1 FP every 10 minutes. A mage who knows this spell at skill 15 or higher recovers 1 FP every 5 minutes. A mage who knows this spell at skill 20 or higher recovers 1 FP every 2 minutes. No further improvement is possible. Note that this spell works on the caster himself; it cannot restore FP to others. The mage must rest quietly, but no ritual or die roll is required. While resting, he can maintain ordinary spells, but not those that require  concentration. This spell does not function in lowor no-mana areas</div></td><td class="spell_class">Special                <div class="secondary">Healing</div></td><td class="mana">0                <div class="secondary">0</div></td><td class="time">1 sec                <div class="secondary">Special</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M89</td></tr><tr class="odd"><td class="description" >Seek Gate<div class="note">Tells the caster the direction and approximate distance of the nearest gate. Any known gates may be excluded if the caster specifically mentions them before beginning</div></td><td class="spell_class">Info                <div class="secondary">Gate</div></td><td class="mana">3                <div class="secondary">-</div></td><td class="time">10 sec                <div class="secondary">Instant</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M85</td></tr><tr class="even"><td class="description" >Seek Magic<div class="note">Determines the direction and approximate distance of the nearest significant magical item, active spell, or magical being (magical beings include demons, elementals, spirits, etc., but not races or individuals with Magery). Regular range penalties apply. Any known examples of magic may be excluded if the caster specifically mentions them before casting. This is also a Meta-Spell</div></td><td class="spell_class">Info                <div class="secondary">Knowledge</div></td><td class="mana">6                <div class="secondary">-</div></td><td class="time">10 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M102</td></tr><tr class="odd"><td class="description" >Sense Emotion<div class="note">Know what emotions the subject is feeling at the moment. It works on any living being, though it tends to be most useful on sapient beings. This will also tell how loyal the subject is to the  caster</div></td><td class="spell_class">Regular                <div class="secondary">Communication</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M45</td></tr><tr class="even"><td class="description" >Sense Foes<div class="note">Tells the caster if the subject has hostile intent, and what the degree of hostility is. Can be cast on one person or a whole area. If cast over an area, this spell will only detect that someone is hostile, without telling who</div></td><td class="spell_class">Info/Area                <div class="secondary">Communication</div></td><td class="mana">1/area, min 2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M44</td></tr><tr class="odd"><td class="description" >Sleep<div class="note">The subject falls asleep. If standing, he falls but this does not wake him. He can be awakened by a blow, loud noise, etc., but will be mentally stunned. </div></td><td class="spell_class">Regular                <div class="secondary">Mind Control</div></td><td class="mana">4                <div class="secondary">-</div></td><td class="time">3 sec                <div class="secondary">Until awakened</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M135</td></tr><tr class="even"><td class="description" >Spasm<div class="note">Can be directed against any of the subject&#8217;s voluntary muscles. Directed against a hand, it causes the subject to drop whatever he is holding (usually a weapon). If the subject is in the middle of a lengthy spell requiring gestures, he must make a DX roll or start over. Ingenious casters will find other uses</div></td><td class="spell_class">Regular                <div class="secondary">Body Control</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M35</td></tr><tr class="odd"><td class="description" >Summon Spirit<div class="note">Talk to the spirit of a dead person. The subject resists at -5 if he was a friend of the caster. If the spell succeeds, the subject will answer one question, to the best of his knowledge as of the time he died, and one more per minute he remains. </div></td><td class="spell_class">Info                <div class="secondary">Necromancy</div></td><td class="mana">20                <div class="secondary">10</div></td><td class="time">5 min                <div class="secondary">1 min</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M150</td></tr><tr class="even"><td class="description" >Total Paralysis<div class="note">The caster must touch the subject on the head (-5 to caster&#8217;s attack roll). If the subject fails to resist, he is totally paralyzed and cannot move at all for one minute (in the average game, until that battle is over).</div></td><td class="spell_class">Melee                <div class="secondary">Body Control</div></td><td class="mana">5                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">1 min</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M40</td></tr><tr class="odd"><td class="description" >Truthsayer<div class="note">Tells whether the subject is lying or not. May be cast in two ways: 1. To tell whether the subject has told anylies in the last five minutes. 2. To tell whether the last thing the subject said was a lie. May also give an indication of how great the lie is. If caster is not touching subject, calculate range as for a Regular spell</div></td><td class="spell_class">Info                <div class="secondary">Communication</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Instant</div></td><td class="spell_level">14</td><td class="relative_spell_level">IQ+1</td><td class="points">1</td><td class="ref">M45</td></tr><tr class="even"><td class="description" >Turn Zombie<div class="note">Inflicts 1d of injury on anything in the area that was animated using the Zombie spell; DR does not protect. In addition, roll 1d for each zombie. On a 1, it turns and flees from the caster</div></td><td class="spell_class">Area                <div class="secondary">Necromancy</div></td><td class="mana">2                <div class="secondary">-</div></td><td class="time">4 sec                <div class="secondary">Turned undead will avoid caster for 1 day</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M152</td></tr><tr class="odd"><td class="description" >Wither Limb<div class="note">The caster must strike the subject on alimb to trigger this spell (hits elsewhere have no effect). Armor does not protect. Resolve resistance on contact. If the caster wins, the subject&#8217;s limb withers immediately; it is crippled for all purposes (see Crippling Injury, p. B420). The subject also takes 1d damage</div></td><td class="spell_class">Melee                <div class="secondary">Body Control</div></td><td class="mana">5                <div class="secondary">-</div></td><td class="time">1 sec                <div class="secondary">Permanent</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M40</td></tr><tr class="even"><td class="description" >Zombie<div class="note">The subject of this spell must be a relatively complete dead body. The animated corpse becomes an undead servant of the caster. </div></td><td class="spell_class">Regular                <div class="secondary">Necromancy</div></td><td class="mana">8                <div class="secondary">-</div></td><td class="time">1 min                <div class="secondary">until destroyed</div></td><td class="spell_level">15</td><td class="relative_spell_level">IQ+2</td><td class="points">2</td><td class="ref">M151</td></tr></table><table id="melee_weapons" class="list"><tr><td class="title">Melee Weapons</td><td class="title">Usage</td><td class="title">Lvl</td><td class="title">Parry</td><td class="title">Block</td><td class="title">Damage</td><td class="title">Reach</td><td class="title">ST</td></tr><tr class="odd"><td class="description">Light Cloak</td><td class="usage"></td><td class="level">0</td><td class="parry">No</td><td class="block">0</td><td class="damage">-</td><td class="reach">-</td><td class="strength">-</td></tr><tr class="even"><td class="description">Natural</td><td class="usage">Kick</td><td class="level">9</td><td class="parry">No</td><td class="block"></td><td class="damage">1d-2 cr</td><td class="reach">C,1</td><td class="strength"></td></tr><tr class="odd"><td class="description">Natural</td><td class="usage">Kick w/Boots</td><td class="level">9</td><td class="parry">No</td><td class="block"></td><td class="damage">1d-1 cr</td><td class="reach">C,1</td><td class="strength"></td></tr><tr class="even"><td class="description">Natural</td><td class="usage">Punch</td><td class="level">11</td><td class="parry">9</td><td class="block"></td><td class="damage">1d-3 cr</td><td class="reach">C</td><td class="strength"></td></tr><tr class="odd"><td class="description">Small Knife</td><td class="usage">Swung</td><td class="level">11</td><td class="parry">8</td><td class="block">No</td><td class="damage">1d-3 cut</td><td class="reach">C,1</td><td class="strength">5</td></tr><tr class="even"><td class="description">Small Knife</td><td class="usage">Thrust</td><td class="level">11</td><td class="parry">8</td><td class="block">No</td><td class="damage">1d-3 imp</td><td class="reach">C</td><td class="strength">5</td></tr><tr class="odd"><td class="description">Total Paralysis<div class="note">The caster must touch the subject on the head (-5 to caster&#8217;s attack roll). If the subject fails to resist, he is totally paralyzed and cannot move at all for one minute (in the average game, until that battle is over).</div></td><td class="usage">Punch</td><td class="level">11</td><td class="parry">9</td><td class="block"></td><td class="damage">1d-3 cr + Paralysis</td><td class="reach">C</td><td class="strength"></td></tr><tr class="even"><td class="description">Wither Limb<div class="note">The caster must strike the subject on alimb to trigger this spell (hits elsewhere have no effect). Armor does not protect. Resolve resistance on contact. If the caster wins, the subject&#8217;s limb withers immediately; it is crippled for all purposes (see Crippling Injury, p. B420). The subject also takes 1d damage</div></td><td class="usage">Punch</td><td class="level">11</td><td class="parry">9</td><td class="block"></td><td class="damage">1d-3 cr +1d</td><td class="reach">C</td><td class="strength"></td></tr></table><table id="ranged_weapons" class="list"><tr><td class="title">Ranged Weapons</td><td class="title">Usage</td><td class="title">Lvl</td><td class="title">Acc</td><td class="title">Damage</td><td class="title">Range</td><td class="title">RoF</td><td class="title">Shots</td><td class="title">Bulk</td><td class="title">Rcl</td><td class="title">ST</td></tr><tr class="odd"><td class="description">Light Cloak</td><td class="usage">Thrown</td><td class="level">6</td><td class="accuracy">+1</td><td class="damage">Special</td><td class="range">2</td><td class="rof">1</td><td class="shots">T(1)</td><td class="bulk">-4</td><td class="recoil"></td><td class="strength">5</td></tr><tr class="even"><td class="description">Small Knife</td><td class="usage">Thrown</td><td class="level">7</td><td class="accuracy">+0</td><td class="damage">1d-3 imp</td><td class="range">5/10</td><td class="rof">1</td><td class="shots">T(1)</td><td class="bulk">-1</td><td class="recoil"></td><td class="strength">5</td></tr></table><table id="equipment" class="list"><tr><td class="title">Equipment (6.508 lb; $230)</td><td class="title">&radic;</td><td class="title">#</td><td class="title">$</td><td class="title">W</td><td class="title">&sum; $</td><td class="title">&sum; W</td><td class="title">Ref</td></tr><tr class="odd"><td class="description" >Small Knife</td><td class="state">E</td><td class="quantity">1</td><td class="cost">30</td><td class="weight">0.5 lb</td><td class="cost_summary">30</td><td class="weight_summary">0.5 lb</td><td class="ref">B272</td></tr><tr class="even"><td class="description" >Light Cloak</td><td class="state">E</td><td class="quantity">1</td><td class="cost">20</td><td class="weight">2 lb</td><td class="cost_summary">20</td><td class="weight_summary">2 lb</td><td class="ref">B287</td></tr><tr class="odd"><td class="description" >Gold Coin (Elder Sign)<div class="note">Prevents passage of servitors.</div></td><td class="state">E</td><td class="quantity">1</td><td class="cost">80</td><td class="weight">0.004 lb</td><td class="cost_summary">80</td><td class="weight_summary">0.004 lb</td><td class="ref">B264</td></tr><tr class="even"><td class="description" >Gold Coin (Yellow Sign)<div class="note">Zenders the holder vulnerable to mind altering magic. </div></td><td class="state">E</td><td class="quantity">1</td><td class="cost">80</td><td class="weight">0.004 lb</td><td class="cost_summary">80</td><td class="weight_summary">0.004 lb</td><td class="ref">B264</td></tr><tr class="odd"><td class="description" >Effigy of Binding<div class="note">This will prevent the target from harming you for a day.  One use only.  Requires target\'s DNA.</div></td><td class="state">C</td><td class="quantity">1</td><td class="cost">0</td><td class="weight">1 lb</td><td class="cost_summary">0</td><td class="weight_summary">1 lb</td><td class="ref">B264</td></tr><tr class="even"><td class="description" >SpellBook<div class="note">This looks rather suspicious, but it is necessary for spellcasting.</div></td><td class="state">C</td><td class="quantity">1</td><td class="cost">0</td><td class="weight">1 lb</td><td class="cost_summary">0</td><td class="weight_summary">1 lb</td><td class="ref">B264</td></tr><tr class="odd"><td class="description" >Vial of Dark Water<div class="note">Destroys the target.  </div></td><td class="state">E</td><td class="quantity">1</td><td class="cost">10</td><td class="weight">1 lb</td><td class="cost_summary">10</td><td class="weight_summary">1 lb</td><td class="ref">B288</td></tr><tr class="even"><td class="description" >Vial of Yig\'s Blood<div class="note">Regenerates the consumer, healing all wounds and giving a reptilian appearance.</div></td><td class="state">E</td><td class="quantity">1</td><td class="cost">10</td><td class="weight">1 lb</td><td class="cost_summary">10</td><td class="weight_summary">1 lb</td><td class="ref">B288</td></tr></table><table id="notes" class="list"><tr><td class="title">Notes</td></tr><tr><td class="description">The stars are aligning.  Yog-Sothoth has turned his gaze upon the Earth.  Gates will appear.  Open one, and Yog-Sothoth will cross the threshold.  <br><br>Goal:  Find the Gate, Open it, Call Yog-Sothoth, receive your reward (be Yog-Sothoth food).<br>To open a gate, stand near it and cast Control Gate.<br><br>Bonus: Get the other players to lend you FP to fuel your Control Gate spell.<br></td></tr></table><div id="copyright">Modified at 11:05 PM on Jan 22, 2017.<br>GURPS Character Sheet is copyright &copy;1998-2016 by Richard A. Wilkes &mdash; All rights reserved worldwide.<br>Licensed for your use under Mozilla Public License, version 2.0</div></body></html>';
-    var e = exporter.getInstance();
-    var i = sheetTypeOneImporter.getInstance();
-    var j = sheetTypeTwoImporter.getInstance();
-
-    //blobHandler.displayFileSelectDialogue(function (file)
-    //{
-    //    text = file;
-    //    console.log('text from file', text);
-    //});
-
-    setTimeout(function ()
+    window.addEventListener("dragover", function (e)
     {
-        char = e.export(text);
-        //i.import(char);
-        j.import(char);
-    }, 1000);
+        e = e || event;
+        e.preventDefault();
+    }, false);
+    window.addEventListener("drop", function (e)
+    {
+        e = e || event;
+        e.preventDefault();
+    }, false);
+
+    console.log("setting up dropzone");
+
+    var fuc = fileUploadController.getInstance();
+    fuc.init();
+    alert("Drag a .html file generated by GCS onto the characters panel and your character will be imported.");
 })();

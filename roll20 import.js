@@ -431,7 +431,13 @@ var sheetTypeOneController = (function ()
 {
     var selectors = {
         acc: 'input[name="attr_acc"]',
-        activeDefenses: '',
+        //activeDefenses: '',
+        generalTab: '.sheet-tab1',
+        traitsTab: '.sheet-tab2',
+        skillsTab: '.sheet-tab3',
+        combatTab: '.sheet-tab4',
+        wealthTab: '.sheet-tab5',
+        grimoireTab: '.sheet-tab6',
         add: 'button.repcontrol_add',
         advantages: 'div.sheet-traits',
         advantagesTab: 'input[name="attr_tab"][value="2"]',
@@ -492,7 +498,6 @@ var sheetTypeOneController = (function ()
         reach: 'input[name="attr_reach"]',
         recoil: 'input[name="attr_recoil"]',
         rof: 'input[name="attr_rof"]',
-        row: 'div.repitem',
         shots: 'input[name="attr_shots"]',
         skill: 'input[name="attr_skill"]',
         skills: 'div.sheet-skills',
@@ -512,6 +517,7 @@ var sheetTypeOneController = (function ()
         weight: 'input[name="attr_weight"]',
         will: 'input[name="attr_willpower_mod"]',
         written: 'select[name="attr_written"]',
+        characterSheetContext: 'div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable',
     };
 
     function Constructor()
@@ -524,230 +530,239 @@ var sheetTypeOneController = (function ()
     function setupChar(char)
     {
         console.log("setupChar");
-        var callbacks = [];
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterAttributes(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterAdvantages(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterSkills(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterCombatStats(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterInventory(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterSpells(context, char, callbacks);
-            }, 200);
-        });
-        callbacks.push(function (callbacks)
-        {
-            setTimeout(function ()
-            {
-                enterName(context, char.name, callbacks);
-            }, 200);
-        });
 
-        var context = getForegroundCharSheet();
-
-        if (confirm("overwrite?"))
+        waitForDOM(document, selectors.characterSheetContext, null, function ()
         {
-            clearForm();
-        }
-
-        waitForDOM(context, selectors.generalTab, null, function ()
-        {
-            context.querySelector(selectors.charSheet).click();
-            waitForDOM(context, selectors.generalTab, null, function ()
+            setTimeout(function ()
             {
-                _execNextCallback(callbacks);
-            });
-        });
-    }
-    function getForegroundCharSheet()
-    {
-        //this gets every sheet that has been clicked, even if they are not visible, because they stay in markup
-        var sheetsInMarkup = document.querySelectorAll("[data-characterid]");
-        //console.log("sheets", sheetsInMarkup);
-        var context = null;
-        var highestZ = -1;
+                var context = getForegroundCharSheet();
 
-        sheetsInMarkup.forEach(function (sheet)
-        {
-            if ((sheet.currentStyle) && (sheet.currentStyle.display === "block") || (getComputedStyle(sheet, null).display === "block"))
-            {
-                var parent = sheet.parentElement;
-
-                if (parent.style.zIndex > highestZ)
+                waitForDOM(context, selectors.charSheet, null, function ()
                 {
-                    //console.log("sheet.style.zIndex", parent.style.zIndex);
-                    //console.log("highestZ", highestZ);
+                    context.querySelector(selectors.charSheet).click();
 
-                    context = parent;
-                    highestZ = parent.style.zIndex;
-                }
-            }
+                    setTimeout(function ()
+                    {
+                        if (confirm("overwrite?"))
+                        {
+                            clearForm();
+                        }
+
+                        waitForDOM(context, selectors.generalTab, null, function ()
+                        {
+                            waitForDOM(context, selectors.generalTab, null, function ()
+                            {
+                                promise.then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterAttributes(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterAdvantages(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterSkills(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterCombatStats(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterInventory(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterSpells(context, char);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                }).then(function (val)
+                                {
+                                    return new Promise(function (resolve, reject)
+                                    {
+                                        enterName(context, char.name);
+                                        setTimeout(function ()
+                                        {
+                                            resolve();
+                                        }, 2000);
+                                    })
+                                });
+                            });
+                        });
+                    }, 1000);
+                });
+            }, 500);
         });
-
-        //console.log("getForegroundCharSheet returning", context);
-        return context;
     }
     function clearForm()
     {
-        var p = new Promise(
-            function (resolve, reject)
-            {
-                resolve();
-            }
-        );
-
-        p.then(
+        promise.then(
             function (val)
             {
-                clearSection(selectors.advantages);
+                return new Promise(function (resolve, reject)
+                {
+                    clearSection(selectors.traitsTab, selectors.advantages);
+                    clearSection(selectors.traitsTab, selectors.disadvantages);
+                    clearSection(selectors.traitsTab, selectors.languages);
+                    setTimeout(function ()
+                    {
+                        resolve();
+                    }, 2000);
+                })
             }).then(
             function (val)
             {
-                clearSection(selectors.disadvantages);
+                return new Promise(function (resolve, reject)
+                {
+                    clearSection(selectors.skillsTab, selectors.skills);
+                    setTimeout(function ()
+                    {
+                        resolve();
+                    }, 2000);
+                })
             }).then(
             function (val)
             {
-                clearSection(selectors.languages);
+                return new Promise(function (resolve, reject)
+                {
+                    clearSection(selectors.combatTab, selectors.meleeAttacks);
+                    clearSection(selectors.combatTab, selectors.rangedAttacks);
+                    setTimeout(function ()
+                    {
+                        resolve();
+                    }, 2000);
+                })
             }).then(
             function (val)
             {
-                clearSection(selectors.skills);
+                return new Promise(function (resolve, reject)
+                {
+                    clearSection(selectors.wealthTab, selectors.items);
+                    setTimeout(function ()
+                    {
+                        resolve();
+                    }, 2000);
+                })
             }).then(
             function (val)
             {
-                clearSection(selectors.meleeAttacks);
-            }).then(
-            function (val)
-            {
-                clearSection(selectors.rangedAttacks);
-            }).then(
-            function (val)
-            {
-                clearSection(selectors.items);
-            }).then(
-            function (val)
-            {
-                clearSection(selectors.spells);
-            })
-
-        .catch(
-            function (reason)
-            {
-                //console.log('Handle rejected promise (' + reason + ') here.');
+                return new Promise(function (resolve, reject)
+                {
+                    clearSection(selectors.grimoireTab, selectors.spells);
+                    setTimeout(function ()
+                    {
+                        resolve();
+                    }, 2000);
+                })
             });
+
+        //.catch(
+        //    function (reason)
+        //    {
+        //        //console.log('Handle rejected promise (' + reason + ') here.');
+        //    });
     }
 
-    function addRow(section, callback, item, callbacks)
-    {
-        console.log("addRow", 'callback', callback, 'item', item, 'section', section);
-        var newRow = getNewRow(section);
-        if (newRow)
-        {
-            callback(newRow, item);
-            _execNextCallback(callbacks);
-        }
-    }
-    function addRows(selector, section, callback, list, sectionCallbacks)
-    {
-        console.log("addRows", selector, section, callback, list);
-        var rowCallbacks = [];
-        var callbackList;
-        var i;
-        var target = section.querySelector(selectors.row);
-
-        list.forEach(function (item)
-        {
-            rowCallbacks.push(function (callbacks)
-            {
-                addRow(section, callback, item, callbacks);
-            });
-        });
-
-        callbackList = rowCallbacks.concat(sectionCallbacks);
-        _execNextCallback(callbackList);
-    }
+    //function addRow(section, callback, item)
+    //{
+    //    console.log("addRow", 'callback', callback, 'item', item, 'section', section);
+    //    var newRow = getNewRow(section);
+    //    if (newRow)
+    //    {
+    //        callback(newRow, item);
+    //    }
+    //}
+    //function addRows(selector, section, callback, list)
+    //{
+    //    console.log("addRows", selector, section, callback, list);
+    //    var rowCallbacks = [];
+    //    var callbackList;
+    //    var i;
+    //    var target = section.querySelector(selectors.row);
+    //
+    //    list.forEach(function (item)
+    //    {
+    //        rowCallbacks.push(function (callbacks)
+    //        {
+    //            addRow(section, callback, item);
+    //        });
+    //    });
+    //
+    //    callbackList = rowCallbacks.concat(sectionCallbacks);
+    //    _execNextCallback(callbackList);
+    //}
     function enterAdvantage(target, advantage)
     {
-        console.log("enterAdvantage", "target", target || "", "advantage", advantage);
+        console.log("enterAdvantage", "target", target, "advantage", advantage);
         updateValue(target, selectors.name, advantage.name);
         updateValue(target, selectors.notes, advantage.notes);
         updateValue(target, selectors.points, advantage.points);
     }
-    function enterAdvantages(context, char, callbacks)
+    function enterAdvantages(context, char)
     {
-        console.log("enterAdvantages", 'char', char, 'callbacks', callbacks);
+        console.log("enterAdvantages", 'char', char);
         context.querySelector(selectors.advantagesTab).click()
-        callbacks.unshift(
-            function (callbacks)
-            {
-                addRows(
-                    selectors.languages,
-                    context.querySelector(selectors.languages),
-                    enterAdvantage,
-                    char.advantages.filter(x=>x.spoken),
-                    callbacks);
-            },
-            function (callbacks)
-            {
-                addRows(
-                    selectors.disadvantages,
-                    context.querySelector(selectors.disadvantages),
-                    enterAdvantage,
-                    char.advantages.filter(x=>!x.spoken && x.points.slice(0, 1) === "-"),
-                    callbacks);
-            },
-            function (callbacks)
-            {
-                addRows(
-                    selectors.advantages,
-                    context.querySelector(selectors.advantages),
-                    enterAdvantage,
-                    char.advantages.filter(x=>!x.spoken && x.points.slice(0, 1) !== "-"),
-                    callbacks);
-            });
+
         waitForDOM(context, selectors.languages, null, function ()
         {
-            _execNextCallback(callbacks);
+            addRows(
+                selectors.languages,
+                context.querySelector(selectors.languages),
+                enterAdvantage,
+                char.advantages.filter(x=>x.spoken));
+            addRows(
+                selectors.disadvantages,
+                context.querySelector(selectors.disadvantages),
+                enterAdvantage,
+                char.advantages.filter(x=>!x.spoken && x.points.slice(0, 1) === "-"));
+            addRows(
+                selectors.advantages,
+                context.querySelector(selectors.advantages),
+                enterAdvantage,
+                char.advantages.filter(x=>!x.spoken && x.points.slice(0, 1) !== "-"));
         });
     }
-    function enterAttributes(context, char, callbacks)
+    function enterAttributes(context, char)
     {
         console.log("enterAttributes", context, char);
-        var steve = context.querySelector(selectors.generalTab);//.click();
-        //console.log("steve", steve);
-        steve.click();
+        context.querySelector(selectors.generalTab).click();
+
         waitForDOM(context, selectors.attributes, null, function ()
         {
             var updateContext = context.querySelector(selectors.attributes);
@@ -773,26 +788,18 @@ var sheetTypeOneController = (function ()
             updateValue(updateContext, selectors.vision, char.vision - 10);
             updateValue(updateContext, selectors.will, char.will - 10);
             updateValue(updateContext.querySelector(selectors.miscellaneous), selectors.tl, char.tl);
-            _execNextCallback(callbacks);
         });
     }
-    function enterCombatStats(context, char, callbacks)
+    function enterCombatStats(context, char)
     {
         console.log("enterCombatStats");
         context.querySelector(selectors.combatTab).click()
-        callbacks.unshift(function (callbacks)
-        {
-            addRows(selectors.meleeAttacks, context.querySelector(selectors.meleeAttacks), enterMeleeWeapon, char.meleeWeapons, callbacks);
-        }, function (callbacks)
-        {
-            addRows(selectors.rangedAttacks, context.querySelector(selectors.rangedAttacks), enterRangedWeapon, char.rangedWeapons, callbacks);
-        }, function (callbacks)
-        {
-            addRows(selectors.hitLocations, context.querySelector(selectors.hitLocations), enterHitLocations, char.rangedWeapons, callbacks);
-        });
+
         waitForDOM(context, selectors.meleeAttacks, null, function ()
         {
-            _execNextCallback(callbacks);
+            addRows(selectors.meleeAttacks, context.querySelector(selectors.meleeAttacks), enterMeleeWeapon, char.meleeWeapons);
+            addRows(selectors.rangedAttacks, context.querySelector(selectors.rangedAttacks), enterRangedWeapon, char.rangedWeapons);
+            addRows(selectors.hitLocations, context.querySelector(selectors.hitLocations), enterHitLocations, char.rangedWeapons);
         });
     }
     function enterHitLocations(target, item)
@@ -810,17 +817,13 @@ var sheetTypeOneController = (function ()
         updateValue(target, selectors.torso, item.torso);
         updateValue(target, selectors.vitals, item.vitalsDR);
     }
-    function enterInventory(context, char, callbacks)
+    function enterInventory(context, char)
     {
         console.log("enterInventory");
         context.querySelector(selectors.inventoryTab).click()
-        callbacks.unshift(function (callbacks)
-        {
-            addRows(selectors.items, context.querySelector(selectors.items), enterItem, char.equipment, callbacks);
-        });
         waitForDOM(context.querySelector(selectors.items), selectors.items, null, function ()
         {
-            _execNextCallback(callbacks);
+            addRows(selectors.items, context.querySelector(selectors.items), enterItem, char.equipment);
         })
     }
     function enterItem(target, item)
@@ -835,12 +838,9 @@ var sheetTypeOneController = (function ()
     function enterLanguage(target, language)
     {
         console.log("enterLanguage", target, language);
-        //target.querySelector(selectors.row,char.placeholder);
         updateValue(target, selectors.name, language.name);
         updateValue(target, selectors.spoken, language.spoken);
         updateValue(target, selectors.written, language.written);
-        //target.querySelector(selectors.add,char.placeholder);
-        //target.querySelector(selectors.edit,char.placeholder);
     }
     function enterMeleeWeapon(target, item)
     {
@@ -888,21 +888,16 @@ var sheetTypeOneController = (function ()
         updateValue(target, selectors.notes, skill.notes);
         updateValue(target, selectors.difficulty, skill.difficulty);
     }
-    function enterSkills(context, char, callbacks)
+    function enterSkills(context, char)
     {
         context.querySelector(selectors.skillsTab).click()
-        callbacks.unshift(function (callbacks)
+        waitForDOM(context, selectors.skills, null, function ()
         {
             addRows(
                 selectors.skills,
                 context.querySelector(selectors.skills),
                 enterSkill,
-                char.skills,
-                callbacks);
-        });
-        waitForDOM(context, selectors.skills, null, function ()
-        {
-            _execNextCallback(callbacks);
+                char.skills);
         });
     }
     function enterSpell(target, spell)
@@ -918,111 +913,21 @@ var sheetTypeOneController = (function ()
         updateValue(target, selectors.maintain, spell.maintain);
         updateValue(target, selectors.ref, spell.ref);
     }
-    function enterSpells(context, char, callbacks)
+    function enterSpells(context, char)
     {
-        console.log("enterSpells", context, callbacks);
+        console.log("enterSpells", context);
 
         context.querySelector(selectors.grimoireTab).click()
-        callbacks.unshift(function (callbacks)
+        waitForDOM(context, selectors.spells, null, function ()
         {
             addRows(
                 selectors.spells,
                 context.querySelector(selectors.spells),
                 enterSpell,
-                char.spells,
-                callbacks);
-        });
-        waitForDOM(context, selectors.spells, null, function ()
-        {
-            _execNextCallback(callbacks);
+                char.spells);
         });
     }
-    function _execNextCallback(callbacks)
-    {
-        console.log("_execNextCallback");
-        if ((callbacks) && (callbacks.length > 0))
-        {
-            var newCallbacks = callbacks;
-            var execMe = newCallbacks.shift();
-            execMe(newCallbacks);
-        }
-    }
-    function findEmptyRow(context, selector)
-    {
-        console.log("findEmptyRow", context, selector);
-        var rows = context.querySelectorAll(selectors.row);
-        //console.log("rows", rows);
-        var i;
-        var returnMe = null;
-        //for (i = 0; i < rows.length; i++)
-        rows.forEach(function (row)
-        {
-            var val = row.querySelector(selectors.name).value;
-            if ((val === '') && (!returnMe))
-            {
-                //console.log("findEmptyRow returning", row);
-                returnMe = row;
-            }
-        });
-        return returnMe;
-    }
-    function getNewRow(context)
-    {
-        console.log("getNewRow", 'context', context);
-        return waitForDOM(context, selectors.add, null, function ()
-        {
-            context.querySelector(selectors.add).click();
-            return waitForDOM(context, selectors.row, findEmptyRow, function (result)
-            {
-                return result;
-            });
-        });
-    }
-    /**
-    need to focus on the item to cause firebase to update
-    */
-    function updateValue(context, selector, value)
-    {
-        console.log("updateValue", "context", context, "selector", selector, "value", value)
-        if (!context)
-        {
-            context = document;
-        }
-        var target = context.querySelector(selector);
-        if (target)
-        {
-            target.click()
-            target.focus();
-            target.value = value;
 
-            triggerEvent(target, 'change');
-            triggerEvent(target, 'keydown');
-            triggerEvent(target, 'keyup');
-            triggerEvent(target, 'blur');
-        }
-    }
-    function triggerEvent(target, eventName)
-    {
-        var event;
-        // The custom event that will be created
-        if (document.createEvent)
-        {
-            event = document.createEvent("HTMLEvents");
-            event.initEvent(eventName, true, true);
-        } else
-        {
-            event = document.createEventObject();
-            event.eventType = eventName;
-        }
-        event.eventName = eventName;
-        if (document.createEvent)
-        {
-            target.dispatchEvent(event);
-        } else
-        {
-            target.fireEvent("on" + event.eventType, event);
-        }
-    }
     return {
         getInstance: function ()
         {
@@ -1035,7 +940,7 @@ var sheetTypeTwoController = (function ()
 {
     var selectors = {
         acc: 'input[name="attr_acc"]',
-        add: 'button.repcontrol_add',
+        //add: 'button.repcontrol_add',
         advantages: '.sheet-traitpanel-top',
         age: 'input[name="attr_charinfo02_max"]',
         areaDRBack: 'input[name="attr_DR11_max"]',
@@ -1115,7 +1020,6 @@ var sheetTypeTwoController = (function ()
         recoil: 'input[name="attr_recoil"]',
         ref: 'input[name="attr_ref"]',
         rof: 'input[name="attr_rof"]',
-        row: 'div.repitem',
         shots: 'input[name="attr_shots"]',
         size: 'input[name="attr_charinfo03"]',
         skill: 'input[name="attr_skill"]',
@@ -1161,7 +1065,6 @@ var sheetTypeTwoController = (function ()
     function setupChar(char)
     {
         console.log("setupChar");
-        var callbacks = [];
         var context;
 
         waitForDOM(document, selectors.characterSheetWindow, null, function ()
@@ -1271,34 +1174,6 @@ var sheetTypeTwoController = (function ()
             }, 500);
         });
     }
-    function getForegroundCharSheet()
-    {
-        //this gets every sheet that has been clicked, even if they are not visible, because they stay in markup
-        var sheetsInMarkup = document.querySelectorAll("[data-characterid]");
-        console.log("sheets", sheetsInMarkup);
-        var context = null;
-        var highestZ = -1;
-
-        sheetsInMarkup.forEach(function (sheet)
-        {
-            if ((sheet.currentStyle) && (sheet.currentStyle.display === "block") || (getComputedStyle(sheet, null).display === "block"))
-            {
-                var parent = sheet.parentElement;
-
-                if (parent.style.zIndex > highestZ)
-                {
-                    console.log("sheet.style.zIndex", parent.style.zIndex);
-                    console.log("highestZ", highestZ);
-
-                    context = parent;
-                    highestZ = parent.style.zIndex;
-                }
-            }
-        });
-
-        console.log("getForegroundCharSheet returning", context);
-        return context;
-    }
 
     function clearForm()
     {
@@ -1385,25 +1260,6 @@ var sheetTypeTwoController = (function ()
         //    });
     }
 
-    function addRow(section, callback, item)
-    {
-        console.log("addRow", 'callback', callback, 'item', item, 'section', section);
-        var newRow = getNewRow(section);
-        if (newRow)
-        {
-            callback(newRow, item);
-        }
-    }
-    function addRows(selector, section, callback, list)
-    {
-        console.log("addRows", selector, section, callback, list);
-        //var target = section.querySelector(selectors.row);
-
-        list.forEach(function (item)
-        {
-            addRow(section, callback, item);
-        });
-    }
     function enterAdvantage(context, advantage)
     {
         console.log("enterAdvantage", "context", context || "", "advantage", advantage);
@@ -1516,37 +1372,6 @@ var sheetTypeTwoController = (function ()
         updateValue(context, selectors.level, spell.level);
         updateValue(context, selectors.controllingAttribute, spell.attr);
     }
-    function findEmptyRow(context, selector)
-    {
-        console.log("findEmptyRow", context, selector);
-        var rows = context.querySelectorAll(selectors.row);
-        //console.log("rows", rows);
-        var i;
-        var returnMe = null;
-        //for (i = 0; i < rows.length; i++)
-        rows.forEach(function (row)
-        {
-            var val = row.querySelector(selectors.name).value;
-            if ((val === '') && (!returnMe))
-            {
-                //console.log("findEmptyRow returning", row);
-                returnMe = row;
-            }
-        });
-        return returnMe;
-    }
-    function getNewRow(context)
-    {
-        console.log("getNewRow", 'context', context);
-        return waitForDOM(context, selectors.add, null, function ()
-        {
-            context.querySelector(selectors.add).click();
-            return waitForDOM(context, selectors.row, findEmptyRow, function (result)
-            {
-                return result;
-            });
-        });
-    }
     function inventory(context, char)
     {
         console.log("enterInventory", context, char);
@@ -1632,48 +1457,6 @@ var sheetTypeTwoController = (function ()
             context.querySelector(selectors.traitsContext),
             enterAdvantage,
             char.advantages.filter(x=>!x.spoken && x.points.slice(0, 1) !== "-"));
-    }
-    function triggerEvent(target, eventName)
-    {
-        var event;
-        // The custom event that will be created
-        if (document.createEvent)
-        {
-            event = document.createEvent("HTMLEvents");
-            event.initEvent(eventName, true, true);
-        } else
-        {
-            event = document.createEventObject();
-            event.eventType = eventName;
-        }
-        event.eventName = eventName;
-        if (document.createEvent)
-        {
-            target.dispatchEvent(event);
-        } else
-        {
-            target.fireEvent("on" + event.eventType, event);
-        }
-    }
-    function updateValue(context, selector, value)
-    {
-        //console.log("updateValue", "context", context, "selector", selector, "value", value)
-        if (!context)
-        {
-            context = document;
-        }
-        var target = context.querySelector(selector);
-        if (target)
-        {
-            target.click()
-            target.focus();
-            target.value = value || "";
-
-            triggerEvent(target, 'change');
-            triggerEvent(target, 'keydown');
-            triggerEvent(target, 'keyup');
-            triggerEvent(target, 'blur');
-        }
     }
     function various(context, char)
     {
@@ -1816,6 +1599,25 @@ var fileUploadController = (function ()
     }
 })();
 
+//common functions
+function addRow(section, callback, item)
+{
+    console.log("addRow", 'callback', callback, 'item', item, 'section', section);
+    var newRow = getNewRow(section);
+    if (newRow)
+    {
+        callback(newRow, item);
+    }
+}
+function addRows(selector, section, callback, list)
+{
+    console.log("addRows", selector, section, callback, list);
+
+    list.forEach(function (item)
+    {
+        addRow(section, callback, item);
+    });
+}
 function clearSection(tab, selector)
 {
     console.log("clearSection", tab, selector);
@@ -1844,6 +1646,111 @@ function clearSection(tab, selector)
         });
         editButton.click();
     });
+}
+function findEmptyRow(context, selector)
+{
+    var rowSelector = 'div.repitem';
+    console.log("findEmptyRow", context, selector);
+    var rows = context.querySelectorAll(rowSelector);
+    //console.log("rows", rows);
+    var i;
+    var returnMe = null;
+    //for (i = 0; i < rows.length; i++)
+    rows.forEach(function (row)
+    {
+        var val = row.querySelector('input[name="attr_name"]').value;
+        if ((val === '') && (!returnMe))
+        {
+            //console.log("findEmptyRow returning", row);
+            returnMe = row;
+        }
+    });
+    return returnMe;
+}
+function getForegroundCharSheet()
+{
+    //this gets every sheet that has been clicked, even if they are not visible, because they stay in markup
+    var sheetsInMarkup = document.querySelectorAll("[data-characterid]");
+    //console.log("sheets", sheetsInMarkup);
+    var context = null;
+    var highestZ = -1;
+
+    sheetsInMarkup.forEach(function (sheet)
+    {
+        if ((sheet.currentStyle) && (sheet.currentStyle.display === "block") || (getComputedStyle(sheet, null).display === "block"))
+        {
+            var parent = sheet.parentElement;
+
+            if (parent.style.zIndex > highestZ)
+            {
+                //console.log("sheet.style.zIndex", parent.style.zIndex);
+                //console.log("highestZ", highestZ);
+
+                context = parent;
+                highestZ = parent.style.zIndex;
+            }
+        }
+    });
+
+    //console.log("getForegroundCharSheet returning", context);
+    return context;
+}
+function getNewRow(context)
+{
+    var rowSelector = 'div.repitem';
+    var addButtonSelector = 'button.repcontrol_add';
+
+    console.log("getNewRow", 'context', context);
+    return waitForDOM(context, addButtonSelector, null, function ()
+    {
+        context.querySelector(addButtonSelector).click();
+        return waitForDOM(context, rowSelector, findEmptyRow, function (result)
+        {
+            return result;
+        });
+    });
+}
+function triggerEvent(target, eventName)
+{
+    var event;
+    // The custom event that will be created
+    if (document.createEvent)
+    {
+        event = document.createEvent("HTMLEvents");
+        event.initEvent(eventName, true, true);
+    } else
+    {
+        event = document.createEventObject();
+        event.eventType = eventName;
+    }
+    event.eventName = eventName;
+    if (document.createEvent)
+    {
+        target.dispatchEvent(event);
+    } else
+    {
+        target.fireEvent("on" + event.eventType, event);
+    }
+}
+function updateValue(context, selector, value)
+{
+    console.log("updateValue", "context", context, "selector", selector, "value", value)
+    if (!context)
+    {
+        context = document;
+    }
+    var target = context.querySelector(selector);
+    if (target)
+    {
+        target.click()
+        target.focus();
+        target.value = value;
+
+        triggerEvent(target, 'change');
+        triggerEvent(target, 'keydown');
+        triggerEvent(target, 'keyup');
+        triggerEvent(target, 'blur');
+    }
 }
 function waitForDOM(context, selector, testCallback, doneCallback, endTime)
 {

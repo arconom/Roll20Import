@@ -1755,8 +1755,9 @@ function updateValue(context, selector, value)
 function waitForDOM(context, selector, testCallback, doneCallback, endTime)
 {
     //console.log('waitForDOM', 'context', context, 'selector', selector, 'testCallback', testCallback, 'doneCallback', doneCallback, 'endTime', endTime);
-    var element = context.querySelector(selector);
-    var testResult = null;
+    var element
+	, testResult = null;
+	
     if (!context)
     {
         context = document;
@@ -1773,6 +1774,10 @@ function waitForDOM(context, selector, testCallback, doneCallback, endTime)
         endTime = new Date();
         endTime = endTime.setSeconds(endTime.getSeconds() + 15);
     }
+
+    element = context.querySelector(selector);
+
+
     testResult = testCallback(context, selector, element);
     if (testResult)
     {

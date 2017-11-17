@@ -1764,7 +1764,7 @@ function waitForDOM(context, selector, testCallback, doneCallback, endTime)
     }
     if (!testCallback)
     {
-        testCallback = function (element)
+        testCallback = function (context, selector, element)
         {
             return element ? true : false;
         }
@@ -1776,9 +1776,8 @@ function waitForDOM(context, selector, testCallback, doneCallback, endTime)
     }
 
     element = context.querySelector(selector);
-
-
     testResult = testCallback(context, selector, element);
+
     if (testResult)
     {
         return doneCallback(testResult);

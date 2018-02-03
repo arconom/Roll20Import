@@ -55,42 +55,6 @@ var parryTypes = {
     "other": "other"
 };
 
-//default character data
-var char = {
-    st: "",
-    dx: "",
-    iq: "",
-    ht: "",
-    will: "",
-    per: "",
-    vision: "",
-    hearing: "",
-    touch: "",
-    smell: "",
-    hp: "",
-    fp: "",
-    er: "",
-    fright: "",
-    speed: "",
-    move: "",
-    lift: "",
-    dodge: "",
-    advantages: [],
-    disadvantages: [],
-    racialTraits: [],
-    skills: [],
-    skullDR: 0,
-    faceDR: 0,
-    eyesDR: 0,
-    neckDR: 0,
-    armsDR: 0,
-    handsDR: 0,
-    torsoDR: 0,
-    vitalsDR: 0,
-    groinDR: 0,
-    legsDR: 0,
-    feetDR: 0
-};
 
 //this will be the queue that manages all the button clicks and stuff so the logic doesn't get ahead of Firebase
 var promise = new Promise(function (resolve, reject) { resolve(); });
@@ -101,7 +65,7 @@ var GCSDataTransformController = (function ()
     function Constructor() { }
     Constructor.prototype.export = function (text)
     {
-        return json.parse(text);
+        return json.parse(text.replace(/([\}\"]),(\s*[\}\]])/, "$1$2"));
     };
     return {
         getInstance: function ()
@@ -1216,8 +1180,6 @@ var fileUploadController = (function ()
     }
     function parseFile(text)
     {
-        if (detectSource(text) === 'GCS')
-        {
             var dtc = GCSDataTransformController.getInstance();
             var char = dtc.export(text);
             addCharacter();
@@ -1233,16 +1195,11 @@ var fileUploadController = (function ()
                     sheetTypeOneController.getInstance().import(char);
                 }
             }, 1000);
-        }
-        else
-        {
-            console.log("file format not supported");
-            alert("file format not supported");
-        }
     }
     //click the add character button and then click save changes
     function addCharacter()
     {
+		console.log("addCharacter");
         var contentDiv = document.querySelector('#journal > div:nth-child(2)'),
         characterPopout = document.querySelector('div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons'),
         addButton = '.superadd',
@@ -1266,20 +1223,6 @@ var fileUploadController = (function ()
                 });
             });
         });
-    }
-    //determine which program generated the input, GCS, GCA, or gCalc
-    function detectSource(data)
-    {
-        console.log("detectSource", "data", data);
-        var text = data.substring(0, 300);
-        if (text.indexOf('Richard A. Wilkes') > -1)
-        {
-            return 'GCS';
-        }
-        else
-        {
-            return null;
-        }
     }
 })();
 

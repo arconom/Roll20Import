@@ -1,230 +1,232 @@
-character:{
-    metadata:{
-        campaign:"@CAMPAIGN"
-        ,createdDate:"@CREATED_ON"
-        ,player:"@PLAYER"
-        ,notes:"@NOTES"
+{
+    "metadata":{
+        "campaign":"@CAMPAIGN"
+        ,"createdDate":"@CREATED_ON"
+        ,"player":"@PLAYER"
+        ,"notes":"@NOTES"
     }
-    ,points:{
-        total:"@TOTAL_POINTS"
-        ,attributes:"@ATTRIBUTE_POINTS"
-        ,advantages:"@ADVANTAGE_POINTS"
-        ,disadvantages:"@DISADVANTAGE_POINTS"
-        ,skills:"@SKILL_POINTS"
-        ,spells:"@SPELL_POINTS"
-        ,earned:"@EARNED_POINTS"
-        ,quirks:"@QUIRK_POINTS"
-        ,race:"@RACE_POINTS"
+    ,"points":{
+        "total":"@TOTAL_POINTS"
+        ,"attributes":"@ATTRIBUTE_POINTS"
+        ,"advantages":"@ADVANTAGE_POINTS"
+        ,"disadvantages":"@DISADVANTAGE_POINTS"
+        ,"skills":"@SKILL_POINTS"
+        ,"spells":"@SPELL_POINTS"
+        ,"earned":"@EARNED_POINTS"
+        ,"quirks":"@QUIRK_POINTS"
+        ,"race":"@RACE_POINTS"
     }
-    ,identity:{
-        name:"@NAME"
-        ,race:"@RACE"
-        ,title:"@TITLE"
-        ,religion:"@RELIGION"
-        ,gender:"@GENDER"
-        ,age:"@AGE"
-        ,tl:"@TL"
-        ,hand:"@HAND"
+    ,"identity":{
+        "name":"@NAME"
+        ,"race":"@RACE"
+        ,"title":"@TITLE"
+        ,"religion":"@RELIGION"
+        ,"gender":"@GENDER"
+        ,"age":"@AGE"
+        ,"tl":"@TL"
+        ,"hand":"@HAND"
     }
-    ,appearance:{
-        height:"@HEIGHT"
-        ,weight:"@WEIGHT"
-        ,eyes:"@EYES"
-        ,hair:"@HAIR"
-        ,skin:"@SKIN"
-        ,size:"@SIZE"
+    ,"appearance":{
+        "height":"@HEIGHT"
+        ,"weight":"@WEIGHT"
+        ,"eyes":"@EYES"
+        ,"hair":"@HAIR"
+        ,"skin":"@SKIN"
+        ,"size":"@SIZE"
     }
-    ,stats:{
-        primary:{
-            st:"@ST"
-            ,dx:"@DX"
-            ,iq:"@IQ"
-            ,ht:"@HT"
+    ,"stats":{
+        "primary":{
+            "st":"@ST"
+            ,"dx":"@DX"
+            ,"iq":"@IQ"
+            ,"ht":"@HT"
         }
-        ,secondary:{
-            will:"@WILL"
-            ,perception:"@PERCEPTION"
-            ,basicSpeed:"@BASIC_SPEED"
-            ,basicMove:"@BASIC_MOVE"
-            ,fp:"@BASIC_FP"
-            ,hp:"@BASIC_HP"
-            ,frightCheck:"@FRIGHT_CHECK"
+        ,"secondary":{
+            "will":"@WILL"
+            ,"perception":"@PERCEPTION"
+            ,"basicSpeed":"@BASIC_SPEED"
+            ,"basicMove":"@BASIC_MOVE"
+            ,"fp":"@BASIC_FP"
+            ,"hp":"@BASIC_HP"
+            ,"frightCheck":"@FRIGHT_CHECK"
         }
-        ,senses:{
-            hearing:"@HEARING"
-            ,tasteSmell:"@TASTE_SMELL"
-            ,vision:"@VISION"
-            ,touch:"@TOUCH"
+        ,"senses":{
+            "hearing":"@HEARING"
+            ,"tasteSmell":"@TASTE_SMELL"
+            ,"vision":"@VISION"
+            ,"touch":"@TOUCH"
         }
-        ,damage:{
-            thrust:"@THRUST"
-            ,swing:"@SWING"
-        }
-    }
-    ,tracking:{
-        hp:{
-            check:{
-                name:"Full"
-                ,value:"@BASIC_HP"
-            }
-            ,check:{
-                name:"Reeling"
-                ,value:"@REELING"
-            }
-            ,check:{
-                name:"Collapse"
-                ,value:"@HP_COLLAPSE"
-            }
-            ,check:{
-                name:"1st Roll"
-                ,value:"@DEATH_CHECK_1"
-            }
-            ,check:{
-                name:"2nd Roll"
-                ,value:"@DEATH_CHECK_2"
-            }
-            ,check:{
-                name:"3rd Roll"
-                ,value:"@DEATH_CHECK_3"
-            }
-            ,check:{
-                name:"4th Roll"
-                ,value:"@DEATH_CHECK_4"
-            }
-            ,check:{
-                name:"Dead"
-                ,value:"@DEAD"
-            }
-        }
-        ,fp:{
-            check:{
-                name:"Full"
-                ,value:"@BASIC_FP"
-            }
-            ,check:{
-                name:"Tired"
-                ,value:"@TIRED"
-            }
-            ,check:{
-                name:"Collapse"
-                ,value:"@FP_COLLAPSE"
-            }
-            ,check:{
-                name:"Unconscious"
-                ,value:"@UNCONSCIOUS"
-            }
+        ,"damage":{
+            "thrust":"@THRUST"
+            ,"swing":"@SWING"
         }
     }
-    ,traits:[
+    ,"tracking":{
+        "hp":{
+            "check":{
+                "name":"Full"
+                ,"value":"@BASIC_HP"
+            }
+            ,"check":{
+                "name":"Reeling"
+                ,"value":"@REELING"
+            }
+            ,"check":{
+                "name":"Collapse"
+                ,"value":"@HP_COLLAPSE"
+            }
+            ,"check":{
+                "name":"1st Roll"
+                ,"value":"@DEATH_CHECK_1"
+            }
+            ,"check":{
+                "name":"2nd Roll"
+                ,"value":"@DEATH_CHECK_2"
+            }
+            ,"check":{
+                "name":"3rd Roll"
+                ,"value":"@DEATH_CHECK_3"
+            }
+            ,"check":{
+                "name":"4th Roll"
+                ,"value":"@DEATH_CHECK_4"
+            }
+            ,"check":{
+                "name":"Dead"
+                ,"value":"@DEAD"
+            }
+        }
+        ,"fp":{
+            "check":{
+                "name":"Full"
+                ,"value":"@BASIC_FP"
+            }
+            ,"check":{
+                "name":"Tired"
+                ,"value":"@TIRED"
+            }
+            ,"check":{
+                "name":"Collapse"
+                ,"value":"@FP_COLLAPSE"
+            }
+            ,"check":{
+                "name":"Unconscious"
+                ,"value":"@UNCONSCIOUS"
+            }
+        }
+    }
+    ,"traits":[
         @ADVANTAGES_LOOP_START
         {
-            depth:"@DEPTHx1"
-            ,name:"@DESCRIPTION_PRIMARY"
-            ,description:"@DESCRIPTION_NOTES"
-            ,modifiers:"@DESCRIPTION_MODIFIER_NOTES"
-            ,points:"@POINTS"
-            ,ref:"@REF"
+            "depth":"@DEPTHx1"
+            ,"name":"@DESCRIPTION_PRIMARY"
+            ,"description":"@DESCRIPTION_NOTES"
+            ,"modifiers":"@DESCRIPTION_MODIFIER_NOTES"
+            ,"points":"@POINTS"
+            ,"ref":"@REF"
         },
         @ADVANTAGES_LOOP_END
     ]
-    ,skills:[
+    ,"skills":[
         @SKILLS_LOOP_START
         {
-            name:"@DESCRIPTION_PRIMARY"
-            ,description:"@DESCRIPTION_NOTES"
-            ,modifiers:"@DESCRIPTION_MODIFIER_NOTES"
-            ,level:"@SL"
-            ,relativeLevel:"@RSL"
-            ,points:"@POINTS"
-            ,ref:"@REF"
+            "name":"@DESCRIPTION_PRIMARY"
+            ,"description":"@DESCRIPTION_NOTES"
+            ,"modifiers":"@DESCRIPTION_MODIFIER_NOTES"
+            ,"level":"@SL"
+            ,"relativeLevel":"@RSL"
+            ,"points":"@POINTS"
+            ,"ref":"@REF"
         },
         @SKILLS_LOOP_END
     ]
-    ,spells:[
+    ,"spells":[
         @SPELLS_LOOP_START
         {
-            name:"@DESCRIPTION_PRIMARY"
-            ,description:"@DESCRIPTION_NOTES"
-            ,modifiers:"@DESCRIPTION_MODIFIER_NOTES"
-            ,class:"@CLASS"
-            ,college:"@COLLEGE"
-            ,level:"@SL"
-            ,relativeLevel:"@RSL"
-            ,points:"@POINTS"
-            ,duration:"@DURATION"
-            ,manaCost:"@MANA_COST"
-            ,manaMaintain:"@MANA_MAINTAIN"
-            ,castTime:"@TIME_CAST"
-            ,ref:"@REF"
+            "name":"@DESCRIPTION_PRIMARY"
+            ,"description":"@DESCRIPTION_NOTES"
+            ,"modifiers":"@DESCRIPTION_MODIFIER_NOTES"
+            ,"class":"@CLASS"
+            ,"college":"@COLLEGE"
+            ,"level":"@SL"
+            ,"relativeLevel":"@RSL"
+            ,"points":"@POINTS"
+            ,"duration":"@DURATION"
+            ,"manaCost":"@MANA_COST"
+            ,"manaMaintain":"@MANA_MAINTAIN"
+            ,"castTime":"@TIME_CAST"
+            ,"ref":"@REF"
         },
         @SPELLS_LOOP_END
     ]
-    ,equipment:[
-        value:"@CARRIED_VALUE"
-        weight:"@CARRIED_WEIGHT"
+    ,"equipment": {
+        "value":"@CARRIED_VALUE"
+        ,"weight":"@CARRIED_WEIGHT"
+		,"list":[
         @EQUIPMENT_LOOP_START
         {
-            name:"@DESCRIPTION_PRIMARY"
-            ,unitCost:"@COST"
-            ,unitWeight:"@WEIGHT"
-            ,totalCost:"@COST_SUMMARY"
-            ,totalWeight:"@WEIGHT_SUMMARY"
-            ,quantity:"@QTY"
-            ,ref:"@REF"
-            ,state:"@STATE"
+            "name":"@DESCRIPTION_PRIMARY"
+            ,"unitCost":"@COST"
+            ,"unitWeight":"@WEIGHT"
+            ,"totalCost":"@COST_SUMMARY"
+            ,"totalWeight":"@WEIGHT_SUMMARY"
+            ,"quantity":"@QTY"
+            ,"ref":"@REF"
+            ,"state":"@STATE"
         },
         @EQUIPMENT_LOOP_END
-    ]
-    ,encumbrance:[
+		]
+	}
+    ,"encumbrance":[
         @ENCUMBRANCE_LOOP_START
         {
-            name:"@LEVEL"
-            ,weight:"@MAX_LOAD"
-            ,dodge:"@DODGE"
-            ,move:"@MOVE"
+            "name":"@LEVEL"
+            ,"weight":"@MAX_LOAD"
+            ,"dodge":"@DODGE"
+            ,"move":"@MOVE"
         },
         @ENCUMBRANCE_LOOP_END
     ]
-    ,hitLocations:[
+    ,"hitLocations":[
         @HIT_LOCATION_LOOP_START
         {
-            name:"@WHERE"
-            ,dr:"@DR"
-            ,penalty:"@PENALTY"
-            ,roll:"@ROLL"
+            "name":"@WHERE"
+            ,"dr":"@DR"
+            ,"penalty":"@PENALTY"
+            ,"roll":"@ROLL"
         },
         @HIT_LOCATION_LOOP_END
     ]
-    ,attacks:{
-        melee:{
+    ,"attacks":{
+        "melee":{
             @MELEE_LOOP_START
-            attack:{
-                description:"@DESCRIPTION"
-                ,level:"@LEVEL"
-                ,block:"@BLOCK"
-                ,damage:"@DAMAGE"
-                ,parry:"@PARRY"
-                ,reach:"@REACH"
-                ,strength:"@STRENGTH"
-                ,usage:"@USAGE"
-            }
+            "attack":{
+                "description":"@DESCRIPTION"
+                ,"level":"@LEVEL"
+                ,"block":"@BLOCK"
+                ,"damage":"@DAMAGE"
+                ,"parry":"@PARRY"
+                ,"reach":"@REACH"
+                ,"strength":"@STRENGTH"
+                ,"usage":"@USAGE"
+            },
             @MELEE_LOOP_END
         }
-        , ranged:{
+        , "ranged":{
             @RANGED_LOOP_START
-            attack:{
-                accuracy:"@ACCURACY"
-                ,bulk:"@BULK"
-                ,damage:"@DAMAGE"
-                ,description:"@DESCRIPTION"
-                ,level:"@LEVEL"
-                ,range:"@RANGE"
-                ,recoil:"@RECOIL"
-                ,rof:"@ROF"
-                ,shots:"@SHOTS"
-                ,strength:"@STRENGTH"
-                ,usage:"@USAGE"
-            }
+            "attack":{
+                "accuracy":"@ACCURACY"
+                ,"bulk":"@BULK"
+                ,"damage":"@DAMAGE"
+                ,"description":"@DESCRIPTION"
+                ,"level":"@LEVEL"
+                ,"range":"@RANGE"
+                ,"recoil":"@RECOIL"
+                ,"rof":"@ROF"
+                ,"shots":"@SHOTS"
+                ,"strength":"@STRENGTH"
+                ,"usage":"@USAGE"
+            },
             @RANGED_LOOP_END
         }
     }

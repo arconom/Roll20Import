@@ -65,7 +65,12 @@ var GCSDataTransformController = (function ()
     function Constructor() { }
     Constructor.prototype.export = function (text)
     {
-        return json.parse(text.replace(/([\}\"]),(\s*[\}\]])/, "$1$2"));
+		console.log("before regex", text);
+		console.log("after regex", text.replace(/([\}\"]),(\s*[\}\]])/g, "$1$2"));
+		
+		
+		
+        return JSON.parse(text.replace(/([\}\"]),(\s*[\}\]])/g, "$1$2"));
     };
     return {
         getInstance: function ()
@@ -1142,13 +1147,17 @@ var fileUploadController = (function ()
     //setup some events and the dropzone
     Constructor.prototype.init = function ()
     {
-        setupDropzone('#journalfolderroot > ol > li:nth-child(1) > ol',
+		var selector = "#journal";
+		// var selector = "#journalfolderroot > ol > li:nth-child(1) > ol";
+        setupDropzone(selector,
             function (context) { console.log("visual change here"); },
             function (context) { console.log("visual change here"); },
             drop);
     }
     function setupDropzone(context, enterCallback, overCallback, dropCallback)
     {
+		console.log("setting up dropzone");
+
         var dropbox;
         dropbox = document.querySelector(context);
         dropbox.addEventListener("dragenter", enterCallback, false);
@@ -1180,6 +1189,7 @@ var fileUploadController = (function ()
     }
     function parseFile(text)
     {
+		console.log("parseFile");
             var dtc = GCSDataTransformController.getInstance();
             var char = dtc.export(text);
             addCharacter();
@@ -1707,8 +1717,6 @@ var BlobHandler = (function ()
         e = e || event;
         e.preventDefault();
     }, false);
-
-    console.log("setting up dropzone");
 
     var fuc = fileUploadController.getInstance();
     fuc.init();

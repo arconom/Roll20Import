@@ -19,10 +19,10 @@ var skillBases = {
 	"None": "10"
 };
 var skillDifficulties = {
-	"-1": "E",
-	"-2": "A",
-	"-3": "H",
-	"-4": "VH",
+	"E":"-1"
+	, "A":"-2"
+	, "H":"-3"
+	, "VH":"-4"
 };
 var damageTypes = {
 	'cut': 'Cutting (cut)',
@@ -429,13 +429,19 @@ var sheetTypeOneController = (function () {
 	}
 	function enterMeleeWeapon(target, item) {
 		console.log("enterMeleeWeapon", target, item);
-		updateValue(target, selectors.damage, item.damage);
+		
+		var split = item.damage.split(" ")
+		, type = damageTypes[split[1]]
+		, magnitude = split[0];
+		
+		updateValue(target, selectors.damage, magnitude);
 		updateValue(target, selectors.name, item.usage);
 		updateValue(target, selectors.reach, item.reach);
 		updateValue(target, selectors.skill, item.level);
-		updateValue(target, selectors.type, item.block);
-		updateValue(target, selectors.type, item.parry);
-		updateValue(target, selectors.type, item.strength);
+		updateValue(target, selectors.block, item.block);
+		updateValue(target, selectors.parry, item.parry);
+		updateValue(target, selectors.strength, item.strength);
+		updateValue(target, selectors.type, type);
 	}
 	function enterName(context, name) {
 		context.querySelector(selectors.bioInfo).click();
@@ -449,25 +455,36 @@ var sheetTypeOneController = (function () {
 	}
 	function enterRangedWeapon(target, item) {
 		console.log("enterRangedWeapon", target, item);
+
+		var split = item.damage.split(" ")
+		, type = damageTypes[split[1]]
+		, magnitude = split[0];
+
 		updateValue(target, selectors.acc, item.accuracy);
 		updateValue(target, selectors.bulk, item.bulk);
-		updateValue(target, selectors.damage, item.damage);
+		updateValue(target, selectors.damage, magnitude);
 		updateValue(target, selectors.name, item.description);
 		updateValue(target, selectors.range, item.range);
 		updateValue(target, selectors.recoil, item.recoil);
 		updateValue(target, selectors.rof, item.rof);
 		updateValue(target, selectors.shots, item.shots);
 		updateValue(target, selectors.skill, item.level);
-		updateValue(target, selectors.type, item.strength);
+		updateValue(target, selectors.strength, item.strength);
+		updateValue(target, selectors.type, type);
 	}
 	function enterSkill(target, skill) {
 		console.log("enterSkill", target, skill);
+		
+		var split = skill.difficulty.split("/")
+		, attr = skillBases[split[0]]
+		, diff = skillDifficulties[split[1]];
+		
 		updateValue(target, selectors.name, skill.name);
 		updateValue(target, selectors.level, skill.level);
-		updateValue(target, selectors.attr, skill.attr);
+		updateValue(target, selectors.attr, attr);
 		updateValue(target, selectors.points, skill.points);
 		updateValue(target, selectors.notes, skill.description);
-		updateValue(target, selectors.difficulty, skill.difficulty);
+		updateValue(target, selectors.difficulty, diff);
 	}
 	function enterSkills(context, char) {
 		context.querySelector(selectors.skillsTab).click()

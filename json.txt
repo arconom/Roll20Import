@@ -133,6 +133,7 @@
             "name":"@DESCRIPTION_PRIMARY"
             ,"description":"@DESCRIPTION_NOTES"
             ,"modifiers":"@DESCRIPTION_MODIFIER_NOTES"
+            ,"difficulty":"@DIFFICULTY"
             ,"level":"@SL"
             ,"relativeLevel":"@RSL"
             ,"points":"@POINTS"
@@ -149,6 +150,7 @@
             ,"class":"@CLASS"
             ,"college":"@COLLEGE"
             ,"level":"@SL"
+            ,"difficulty":"@DIFFICULTY"
             ,"relativeLevel":"@RSL"
             ,"points":"@POINTS"
             ,"duration":"@DURATION"
@@ -166,6 +168,7 @@
         @EQUIPMENT_LOOP_START
         {
             "name":"@DESCRIPTION_PRIMARY"
+            ,"description":"@DESCRIPTION_NOTES"
             ,"unitCost":"@COST"
             ,"unitWeight":"@WEIGHT"
             ,"totalCost":"@COST_SUMMARY"
@@ -198,10 +201,10 @@
         @HIT_LOCATION_LOOP_END
     ]
     ,"attacks":{
-        "melee":{
+        "melee":[
             @MELEE_LOOP_START
-            "attack":{
-                "description":"@DESCRIPTION"
+            {
+                "description":"@DESCRIPTION_PRIMARY   @DESCRIPTION_NOTES"
                 ,"level":"@LEVEL"
                 ,"block":"@BLOCK"
                 ,"damage":"@DAMAGE"
@@ -211,14 +214,14 @@
                 ,"usage":"@USAGE"
             },
             @MELEE_LOOP_END
-        }
-        , "ranged":{
+        ]
+        , "ranged":[
             @RANGED_LOOP_START
-            "attack":{
+            {
                 "accuracy":"@ACCURACY"
                 ,"bulk":"@BULK"
                 ,"damage":"@DAMAGE"
-                ,"description":"@DESCRIPTION"
+                ,"description":"@DESCRIPTION_PRIMARY   @DESCRIPTION_NOTES"
                 ,"level":"@LEVEL"
                 ,"range":"@RANGE"
                 ,"recoil":"@RECOIL"
@@ -228,6 +231,6 @@
                 ,"usage":"@USAGE"
             },
             @RANGED_LOOP_END
-        }
+        ]
     }
 }

@@ -154,7 +154,7 @@
             ,"relativeLevel":"@RSL"
             ,"points":"@POINTS"
             ,"duration":"@DURATION"
-            ,"manaCost":"@MANA_COST"
+            ,"manaCost":"@MANA_CAST"
             ,"manaMaintain":"@MANA_MAINTAIN"
             ,"castTime":"@TIME_CAST"
             ,"ref":"@REF"

@@ -59,39 +59,30 @@ var parryTypes = {
 };
 
 //this will be the queue that manages all the button clicks and stuff so the logic doesn't get ahead of Firebase
-var promise = new Promise(function(resolve, reject) {
+var promise = new Promise(function (resolve, reject) {
     resolve();
-}
-);
+});
 
 //this takes the data from the source and transforms it into something usable
-var GCSDataTransformController = (function() {
+var GCSDataTransformController = (function () {
     function Constructor() {}
-    Constructor.prototype.export = function(text) {
+    Constructor.prototype.export = function (text) {
         console.log("before regex", text);
         console.log("after regex", text.replace(/([\}\"]),(\s*[\}\]])/g, "$1$2"));
 
         return JSON.parse(text.replace(/([\}\"]),(\s*[\}\]])/g, "$1$2"));
-    }
-    ;
+    };
     return {
-        getInstance: function() {
+        getInstance: function () {
             return new Constructor();
         }
     };
-}
-)();
+})();
 
-var sheetTypeOneController = (function() {
+var sheetTypeOneController = (function () {
     var selectors = {
-        acc: 'input[name="attr_acc"]',
         //activeDefenses: '',
-        generalTab: '.sheet-tab1',
-        traitsTab: '.sheet-tab2',
-        skillsTab: '.sheet-tab3',
-        combatTab: '.sheet-tab4',
-        wealthTab: '.sheet-tab5',
-        grimoireTab: '.sheet-tab6',
+        acc: 'input[name="attr_acc"]',
         add: 'button.repcontrol_add',
         advantages: 'div.sheet-traits',
         advantagesTab: 'input[name="attr_tab"][value="2"]',
@@ -107,6 +98,8 @@ var sheetTypeOneController = (function() {
         castTime: 'input[name="attr_castTime"]',
         charName: 'input.name[type="text"]',
         charSheet: 'a[data-tab="charsheet"]',
+        characterSheetContext: 'div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable',
+        // combatTab: '.sheet-tab4',
         combatTab: 'input[name="attr_tab"][value="4"]',
         cost: 'input[name="attr_cost"]',
         count: 'input[name="attr_count"]',
@@ -123,7 +116,9 @@ var sheetTypeOneController = (function() {
         fear: 'input[name="attr_fear_check_mod"]',
         feet: 'input[name="attr_feet_dr_max"]',
         fp: 'input[name="attr_fatigue_points_max"]',
+        // generalTab: '.sheet-tab1',
         generalTab: 'input[name="attr_tab"][value="1"]',
+        // grimoireTab: '.sheet-tab6',
         grimoireTab: 'input[name="attr_tab"][value="6"]',
         groin: 'input[name="attr_groind_dr_max"]',
         hands: 'input[name="attr_hands_dr_max"]',
@@ -155,6 +150,7 @@ var sheetTypeOneController = (function() {
         shots: 'input[name="attr_shots"]',
         skill: 'input[name="attr_skill"]',
         skills: 'div.sheet-skills',
+        // skillsTab: '.sheet-tab3',
         skillsTab: 'input[name="attr_tab"][value="3"]',
         skull: 'input[name="attr_skull_dr_max"]',
         smell: 'input[name="attr_taste_smell_mod"]',
@@ -165,94 +161,87 @@ var sheetTypeOneController = (function() {
         tl: 'input[name="attr_tl"]',
         torso: 'input[name="attr_torso_dr_max"]',
         touch: 'input[name="attr_touch_mod"]',
+        traitsTab: '.sheet-tab2',
         type: 'select[name="attr_type"]',
         vision: 'input[name="attr_vision_mod"]',
         vitals: 'input[name="attr_vitals_dr_max"]',
+        wealthTab: '.sheet-tab5',
         weight: 'input[name="attr_weight"]',
         will: 'input[name="attr_willpower_mod"]',
-        written: 'select[name="attr_written"]',
-        characterSheetContext: 'div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable',
+        written: 'select[name="attr_written"]'
     };
 
     function Constructor() {}
-    Constructor.prototype.import = function(char) {
+    Constructor.prototype.import = function (char) {
         setupChar(char);
-    }
-    ;
+    };
     function setupChar(char) {
         console.log("setupChar");
 
-        waitForDOM(document, selectors.characterSheetContext, null, function() {
-            setTimeout(function() {
+        waitForDOM(document, selectors.characterSheetContext, null, function () {
+            setTimeout(function () {
                 var context = getForegroundCharSheet();
 
-                waitForDOM(context, selectors.charSheet, null, function() {
+                waitForDOM(context, selectors.charSheet, null, function () {
                     context.querySelector(selectors.charSheet).click();
 
-                    setTimeout(function() {
+                    setTimeout(function () {
                         // if (confirm("overwrite?")) {
                         // clearForm();
                         // }
 
-                        waitForDOM(context, selectors.generalTab, null, function() {
-                            waitForDOM(context, selectors.generalTab, null, function() {
-                                promise.then(function(val) {
+                        waitForDOM(context, selectors.generalTab, null, function () {
+                            waitForDOM(context, selectors.generalTab, null, function () {
+                                promise.then(function (val) {
                                     enterAttributes(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterAdvantages(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterSkills(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterCombatStats(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterInventory(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterSpells(context, char);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function(val) {
+                                    });
+                                }).then(function (val) {
                                     enterName(context, char.identity.name);
-                                    return new Promise(function(resolve, reject) {
-                                        setTimeout(function() {
+                                    return new Promise(function (resolve, reject) {
+                                        setTimeout(function () {
                                             resolve();
                                         }, 2000);
-                                    }
-                                    )
-                                }).then(function() {
+                                    });
+                                }).then(function () {
                                     alert("finished");
                                 });
                             });
@@ -263,49 +252,44 @@ var sheetTypeOneController = (function() {
         });
     }
     function clearForm() {
-        promise.then(function(val) {
-            return new Promise(function(resolve, reject) {
+        promise.then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.traitsTab, selectors.advantages);
                 clearSection(selectors.traitsTab, selectors.disadvantages);
                 clearSection(selectors.traitsTab, selectors.languages);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            });
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.skillsTab, selectors.skills);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            });
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.combatTab, selectors.meleeAttacks);
                 clearSection(selectors.combatTab, selectors.rangedAttacks);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            });
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.wealthTab, selectors.items);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            });
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.grimoireTab, selectors.spells);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 2000);
-            }
-            )
+            });
         });
 
         //.catch(
@@ -351,19 +335,19 @@ var sheetTypeOneController = (function() {
     }
     function enterAdvantages(context, char) {
         console.log("enterAdvantages", 'char', char);
-        context.querySelector(selectors.advantagesTab).click()
+        context.querySelector(selectors.advantagesTab).click();
 
-        waitForDOM(context, selectors.languages, null, function() {
-            addRows(selectors.languages, context.querySelector(selectors.languages), enterAdvantage, char.traits.filter(x=>x.spoken));
-            addRows(selectors.disadvantages, context.querySelector(selectors.disadvantages), enterAdvantage, char.traits.filter(x=>!x.spoken && x.points.slice(0, 1) === "-"));
-            addRows(selectors.advantages, context.querySelector(selectors.advantages), enterAdvantage, char.traits.filter(x=>!x.spoken && x.points.slice(0, 1) !== "-"));
+        waitForDOM(context, selectors.languages, null, function () {
+            addRows(selectors.languages, context.querySelector(selectors.languages), enterAdvantage, char.traits.filter(x => x.spoken));
+            addRows(selectors.disadvantages, context.querySelector(selectors.disadvantages), enterAdvantage, char.traits.filter(x => !x.spoken && x.points.slice(0, 1) === "-"));
+            addRows(selectors.advantages, context.querySelector(selectors.advantages), enterAdvantage, char.traits.filter(x => !x.spoken && x.points.slice(0, 1) !== "-"));
         });
     }
     function enterAttributes(context, char) {
         console.log("enterAttributes", context, char);
         context.querySelector(selectors.generalTab).click();
 
-        waitForDOM(context, selectors.attributes, null, function() {
+        waitForDOM(context, selectors.attributes, null, function () {
             var updateContext = context.querySelector(selectors.attributes);
             // updateValue(updateContext, selectors.basicLift, char.lift - 20);
             updateValue(updateContext, selectors.dexterity, char.stats.primary.dx - 10);
@@ -387,7 +371,7 @@ var sheetTypeOneController = (function() {
         console.log("enterCombatStats");
         context.querySelector(selectors.combatTab).click()
 
-        waitForDOM(context, selectors.meleeAttacks, null, function() {
+        waitForDOM(context, selectors.meleeAttacks, null, function () {
             addRows(selectors.meleeAttacks, context.querySelector(selectors.meleeAttacks), enterMeleeWeapon, char.attacks.melee);
             addRows(selectors.rangedAttacks, context.querySelector(selectors.rangedAttacks), enterRangedWeapon, char.attacks.ranged);
             enterHitLocations(context, char);
@@ -396,22 +380,22 @@ var sheetTypeOneController = (function() {
     function enterHitLocations(target, item) {
         console.log("enterHitLocations", target, item);
 
-        updateValue(target, selectors.arms, item.hitLocations.filter(x=>x.name.indexOf("arms") > -1));
-        updateValue(target, selectors.eyes, item.hitLocations.filter(x=>x.name.indexOf("eyes") > -1));
-        updateValue(target, selectors.face, item.hitLocations.filter(x=>x.name.indexOf("face") > -1));
-        updateValue(target, selectors.feet, item.hitLocations.filter(x=>x.name.indexOf("feet") > -1));
-        updateValue(target, selectors.groin, item.hitLocations.filter(x=>x.name.indexOf("groin") > -1));
-        updateValue(target, selectors.hands, item.hitLocations.filter(x=>x.name.indexOf("hands") > -1));
-        updateValue(target, selectors.legs, item.hitLocations.filter(x=>x.name.indexOf("legs") > -1));
-        updateValue(target, selectors.neck, item.hitLocations.filter(x=>x.name.indexOf("neck") > -1));
-        updateValue(target, selectors.skull, item.hitLocations.filter(x=>x.name.indexOf("skull") > -1));
-        updateValue(target, selectors.torso, item.hitLocations.filter(x=>x.name.indexOf("torso") > -1));
-        updateValue(target, selectors.vitals, item.hitLocations.filter(x=>x.name.indexOf("vitals") > -1));
+        updateValue(target, selectors.arms, item.hitLocations.filter(x => x.name.indexOf("arms") > -1));
+        updateValue(target, selectors.eyes, item.hitLocations.filter(x => x.name.indexOf("eyes") > -1));
+        updateValue(target, selectors.face, item.hitLocations.filter(x => x.name.indexOf("face") > -1));
+        updateValue(target, selectors.feet, item.hitLocations.filter(x => x.name.indexOf("feet") > -1));
+        updateValue(target, selectors.groin, item.hitLocations.filter(x => x.name.indexOf("groin") > -1));
+        updateValue(target, selectors.hands, item.hitLocations.filter(x => x.name.indexOf("hands") > -1));
+        updateValue(target, selectors.legs, item.hitLocations.filter(x => x.name.indexOf("legs") > -1));
+        updateValue(target, selectors.neck, item.hitLocations.filter(x => x.name.indexOf("neck") > -1));
+        updateValue(target, selectors.skull, item.hitLocations.filter(x => x.name.indexOf("skull") > -1));
+        updateValue(target, selectors.torso, item.hitLocations.filter(x => x.name.indexOf("torso") > -1));
+        updateValue(target, selectors.vitals, item.hitLocations.filter(x => x.name.indexOf("vitals") > -1));
     }
     function enterInventory(context, char) {
         console.log("enterInventory");
         context.querySelector(selectors.inventoryTab).click()
-        waitForDOM(context, selectors.items, null, function() {
+        waitForDOM(context, selectors.items, null, function () {
             addRows(selectors.items, context.querySelector(selectors.items), enterItem, char.equipment.list);
         })
     }
@@ -420,7 +404,7 @@ var sheetTypeOneController = (function() {
         updateValue(target, selectors.cost, item.unitCost);
         updateValue(target, selectors.count, item.quantity);
         updateValue(target, selectors.name, item.name);
-        updateValue(target, selectors.weight, item.unitWeight);
+        updateValue(target, selectors.weight, item.unitWeight.split(" ")[0]);
         updateValue(target, selectors.notes, item.description);
     }
     function enterLanguage(target, language) {
@@ -432,9 +416,9 @@ var sheetTypeOneController = (function() {
     function enterMeleeWeapon(target, item) {
         console.log("enterMeleeWeapon", target, item);
 
-        var split = item.damage.split(" ")
-          , type = damageTypes[split[1]]
-          , magnitude = split[0];
+        var split = item.damage.split(" "),
+        type = damageTypes[split[1]],
+        magnitude = split[0];
 
         updateValue(target, selectors.damage, magnitude);
         updateValue(target, selectors.name, item.usage);
@@ -450,7 +434,7 @@ var sheetTypeOneController = (function() {
         context.querySelector(selectors.editButton).click();
 
         var editContext = getForegroundCharSheet();
-        waitForDOM(editContext, 'input.name', null, function() {
+        waitForDOM(editContext, 'input.name', null, function () {
             updateValue(editContext, 'input.name', name);
             editContext.querySelector('body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons > div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > div > button:nth-child(1)').click();
         });
@@ -458,9 +442,9 @@ var sheetTypeOneController = (function() {
     function enterRangedWeapon(target, item) {
         console.log("enterRangedWeapon", target, item);
 
-        var split = item.damage.split(" ")
-          , type = damageTypes[split[1]]
-          , magnitude = split[0];
+        var split = item.damage.split(" "),
+        type = damageTypes[split[1]],
+        magnitude = split[0];
 
         updateValue(target, selectors.acc, item.accuracy);
         updateValue(target, selectors.bulk, item.bulk);
@@ -477,7 +461,9 @@ var sheetTypeOneController = (function() {
     function enterSkill(target, skill) {
         console.log("enterSkill", target, skill);
 
-        var split, attr, diff;
+        var split,
+        attr,
+        diff;
 
         if (skill.difficulty.indexOf("/") > -1) {
             split = skill.difficulty.split("/");
@@ -496,7 +482,7 @@ var sheetTypeOneController = (function() {
     }
     function enterSkills(context, char) {
         context.querySelector(selectors.skillsTab).click()
-        waitForDOM(context, selectors.skills, null, function() {
+        waitForDOM(context, selectors.skills, null, function () {
             addRows(selectors.skills, context.querySelector(selectors.skills), enterSkill, char.skills);
         });
     }
@@ -517,20 +503,19 @@ var sheetTypeOneController = (function() {
         console.log("enterSpells", context);
 
         context.querySelector(selectors.grimoireTab).click()
-        waitForDOM(context, selectors.spells, null, function() {
+        waitForDOM(context, selectors.spells, null, function () {
             addRows(selectors.spells, context.querySelector(selectors.spells), enterSpell, char.spells);
         });
     }
 
     return {
-        getInstance: function() {
+        getInstance: function () {
             return new Constructor();
         }
     };
-}
-)();
+})();
 
-var sheetTypeTwoController = (function() {
+var sheetTypeTwoController = (function () {
     var selectors = {
         acc: 'input[name="attr_acc"]',
         //add: 'button.repcontrol_add',
@@ -651,92 +636,84 @@ var sheetTypeTwoController = (function() {
         characterSheetWindow: 'body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable'
     };
     function Constructor() {}
-    Constructor.prototype.import = function(char) {
+    Constructor.prototype.import = function (char) {
         setupChar(char);
-    }
-    ;
+    };
     function setupChar(char) {
         console.log("setupChar");
         var context;
 
-        waitForDOM(document, selectors.characterSheetWindow, null, function() {
-            setTimeout(function() {
+        waitForDOM(document, selectors.characterSheetWindow, null, function () {
+            setTimeout(function () {
                 context = getForegroundCharSheet();
 
                 if (confirm("overwrite?")) {
                     clearForm();
                 }
 
-                waitForDOM(context, selectors.characterSheetTabContext, null, function() {
-                    setTimeout(function() {
+                waitForDOM(context, selectors.characterSheetTabContext, null, function () {
+                    setTimeout(function () {
                         context.querySelector(selectors.characterSheetTabContext).click();
 
-                        waitForDOM(context, selectors.mainTab, null, function() {
+                        waitForDOM(context, selectors.mainTab, null, function () {
                             context.querySelector(selectors.mainTab).click();
-                            waitForDOM(context, selectors.mainTab, null, function() {
-                                promise.then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                            waitForDOM(context, selectors.mainTab, null, function () {
+                                promise.then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         main(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("main tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         skills(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("skill tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         traits(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("traits tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         inventory(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("inventory tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         powers(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("power tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         various(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("various tab data entry resolving at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
-                                }).then(function(val) {
-                                    return new Promise(function(resolve, reject) {
+                                    })
+                                }).then(function (val) {
+                                    return new Promise(function (resolve, reject) {
                                         enterName(context, char);
-                                        setTimeout(function() {
+                                        setTimeout(function () {
                                             resolve();
                                             console.log("name entry resolved at ", Date.now());
                                         }, 5000);
-                                    }
-                                    )
+                                    })
                                 })
                             });
                         });
@@ -747,62 +724,56 @@ var sheetTypeTwoController = (function() {
     }
 
     function clearForm() {
-        promise.then(function(val) {
-            return new Promise(function(resolve, reject) {
+        promise.then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.mainTab, selectors.meleeWeapons);
                 clearSection(selectors.mainTab, selectors.rangedWeapons);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("main tab resolving at ", Date.now());
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            })
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.skillsTab, selectors.skillsContext);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("skills resolving at ", Date.now());
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            })
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.traitsTab, selectors.traitsContext);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("traits resolving at ", Date.now());
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            })
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.inventoryTab, selectors.consumablesContext);
                 clearSection(selectors.inventoryTab, selectors.otherItemsContext);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("inventory resolving at ", Date.now());
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            })
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.powersTab, selectors.powersContext);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("powers resolving at ", Date.now());
                 }, 2000);
-            }
-            )
-        }).then(function(val) {
-            return new Promise(function(resolve, reject) {
+            })
+        }).then(function (val) {
+            return new Promise(function (resolve, reject) {
                 clearSection(selectors.variousTab, selectors.languageContext);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                     console.log("languages resolving at ", Date.now());
                 }, 2000);
-            }
-            )
+            })
         })
 
         //.catch(
@@ -820,26 +791,26 @@ var sheetTypeTwoController = (function() {
     }
     function enterHitLocations(context, char) {
         console.log("enterRangedWeapon", context);
-        updateValue(context, selectors.armsDRBack, char.hitLocations.filter(x=>x.name.indexOf("arms") > -1).dr);
-        updateValue(context, selectors.armsDRFront, char.hitLocations.filter(x=>x.name.indexOf("arms") > -1).dr);
-        updateValue(context, selectors.eyesDRBack, char.hitLocations.filter(x=>x.name.indexOf("eyes") > -1).dr);
-        updateValue(context, selectors.eyesDRFront, char.hitLocations.filter(x=>x.name.indexOf("eyes") > -1).dr);
-        updateValue(context, selectors.faceDRBack, char.hitLocations.filter(x=>x.name.indexOf("face") > -1).dr);
-        updateValue(context, selectors.faceDRFront, char.hitLocations.filter(x=>x.name.indexOf("face") > -1).dr);
-        updateValue(context, selectors.feetDRBack, char.hitLocations.filter(x=>x.name.indexOf("feet") > -1).dr);
-        updateValue(context, selectors.feetDRFront, char.hitLocations.filter(x=>x.name.indexOf("feet") > -1).dr);
-        updateValue(context, selectors.groinDRBack, char.hitLocations.filter(x=>x.name.indexOf("groin") > -1).dr);
-        updateValue(context, selectors.groinDRFront, char.hitLocations.filter(x=>x.name.indexOf("groin") > -1).dr);
-        updateValue(context, selectors.handsDRBack, char.hitLocations.filter(x=>x.name.indexOf("hands") > -1).dr);
-        updateValue(context, selectors.handsDRFront, char.hitLocations.filter(x=>x.name.indexOf("hands") > -1).dr);
-        updateValue(context, selectors.legsDRBack, char.hitLocations.filter(x=>x.name.indexOf("legs") > -1).dr);
-        updateValue(context, selectors.legsDRFront, char.hitLocations.filter(x=>x.name.indexOf("legs") > -1).dr);
-        updateValue(context, selectors.neckDRBack, char.hitLocations.filter(x=>x.name.indexOf("neck") > -1).dr);
-        updateValue(context, selectors.neckDRFront, char.hitLocations.filter(x=>x.name.indexOf("neck") > -1).dr);
-        updateValue(context, selectors.skullDRBack, char.hitLocations.filter(x=>x.name.indexOf("skull") > -1).dr);
-        updateValue(context, selectors.skullDRFront, char.hitLocations.filter(x=>x.name.indexOf("skull") > -1).dr);
-        updateValue(context, selectors.torsoDRBack, char.hitLocations.filter(x=>x.name.indexOf("torso") > -1).dr);
-        updateValue(context, selectors.torsoDRFront, char.hitLocations.filter(x=>x.name.indexOf("torso") > -1).dr);
+        updateValue(context, selectors.armsDRBack, char.hitLocations.filter(x => x.name.indexOf("arms") > -1).dr);
+        updateValue(context, selectors.armsDRFront, char.hitLocations.filter(x => x.name.indexOf("arms") > -1).dr);
+        updateValue(context, selectors.eyesDRBack, char.hitLocations.filter(x => x.name.indexOf("eyes") > -1).dr);
+        updateValue(context, selectors.eyesDRFront, char.hitLocations.filter(x => x.name.indexOf("eyes") > -1).dr);
+        updateValue(context, selectors.faceDRBack, char.hitLocations.filter(x => x.name.indexOf("face") > -1).dr);
+        updateValue(context, selectors.faceDRFront, char.hitLocations.filter(x => x.name.indexOf("face") > -1).dr);
+        updateValue(context, selectors.feetDRBack, char.hitLocations.filter(x => x.name.indexOf("feet") > -1).dr);
+        updateValue(context, selectors.feetDRFront, char.hitLocations.filter(x => x.name.indexOf("feet") > -1).dr);
+        updateValue(context, selectors.groinDRBack, char.hitLocations.filter(x => x.name.indexOf("groin") > -1).dr);
+        updateValue(context, selectors.groinDRFront, char.hitLocations.filter(x => x.name.indexOf("groin") > -1).dr);
+        updateValue(context, selectors.handsDRBack, char.hitLocations.filter(x => x.name.indexOf("hands") > -1).dr);
+        updateValue(context, selectors.handsDRFront, char.hitLocations.filter(x => x.name.indexOf("hands") > -1).dr);
+        updateValue(context, selectors.legsDRBack, char.hitLocations.filter(x => x.name.indexOf("legs") > -1).dr);
+        updateValue(context, selectors.legsDRFront, char.hitLocations.filter(x => x.name.indexOf("legs") > -1).dr);
+        updateValue(context, selectors.neckDRBack, char.hitLocations.filter(x => x.name.indexOf("neck") > -1).dr);
+        updateValue(context, selectors.neckDRFront, char.hitLocations.filter(x => x.name.indexOf("neck") > -1).dr);
+        updateValue(context, selectors.skullDRBack, char.hitLocations.filter(x => x.name.indexOf("skull") > -1).dr);
+        updateValue(context, selectors.skullDRFront, char.hitLocations.filter(x => x.name.indexOf("skull") > -1).dr);
+        updateValue(context, selectors.torsoDRBack, char.hitLocations.filter(x => x.name.indexOf("torso") > -1).dr);
+        updateValue(context, selectors.torsoDRFront, char.hitLocations.filter(x => x.name.indexOf("torso") > -1).dr);
     }
     function enterItem(context, item) {
         console.log("enterItem", context, item);
@@ -868,7 +839,7 @@ var sheetTypeTwoController = (function() {
         context.querySelector(selectors.editButton).click();
 
         var editContext = getForegroundCharSheet();
-        waitForDOM(editContext, 'input.name', null, function() {
+        waitForDOM(editContext, 'input.name', null, function () {
             editContext.querySelector('input.name').value = char.identity.name;
             editContext.querySelector('button.ui-button.ui-widget.ui-state-default.ui-corner-all.ui-button-text-only[type="button"][role="button"][aria-disabled="false"]').click();
         });
@@ -923,7 +894,7 @@ var sheetTypeTwoController = (function() {
         var steve = context.querySelector(selectors.mainTab);
         //.click();
         steve.click();
-        waitForDOM(context, selectors.attributeContext, null, function() {
+        waitForDOM(context, selectors.attributeContext, null, function () {
             var attributeContext = context.querySelector(selectors.attributeContext);
             var defensesContext = context.querySelector(selectors.defensesContext);
 
@@ -975,8 +946,8 @@ var sheetTypeTwoController = (function() {
     function traits(context, char) {
         console.log("traits", 'context', context);
         context.querySelector(selectors.traitsTab).click()
-        addRows(selectors.disadvantages, context.querySelector(selectors.traitsContext), enterAdvantage, char.traits.filter(x=>!x.spoken && x.points.slice(0, 1) === "-"));
-        addRows(selectors.advantages, context.querySelector(selectors.traitsContext), enterAdvantage, char.traits.filter(x=>!x.spoken && x.points.slice(0, 1) !== "-"));
+        addRows(selectors.disadvantages, context.querySelector(selectors.traitsContext), enterAdvantage, char.traits.filter(x => !x.spoken && x.points.slice(0, 1) === "-"));
+        addRows(selectors.advantages, context.querySelector(selectors.traitsContext), enterAdvantage, char.traits.filter(x => !x.spoken && x.points.slice(0, 1) !== "-"));
     }
     function various(context, char) {
         console.log("various", "context", context);
@@ -992,26 +963,25 @@ var sheetTypeTwoController = (function() {
         //updateValue(context, selectors.height, char.);
         //updateValue(context, selectors.hairColor, char.);
         //updateValue(context, selectors.eyeColor, char.);
-        addRows(selectors.languages, context.querySelector(selectors.languageContext), enterLanguage, char.traits.filter(x=>x.spoken));
+        addRows(selectors.languages, context.querySelector(selectors.languageContext), enterLanguage, char.traits.filter(x => x.spoken));
         updateValue(context, selectors.characterName, char.identity.name);
     }
     return {
-        getInstance: function() {
+        getInstance: function () {
             return new Constructor();
         }
     };
-}
-)();
+})();
 
-var fileUploadController = (function() {
+var fileUploadController = (function () {
     function Constructor() {}
     //setup some events and the dropzone
-    Constructor.prototype.init = function() {
+    Constructor.prototype.init = function () {
         var selector = "#journal";
         // var selector = "#journalfolderroot > ol > li:nth-child(1) > ol";
-        setupDropzone(selector, function(context) {
+        setupDropzone(selector, function (context) {
             console.log("visual change here");
-        }, function(context) {
+        }, function (context) {
             console.log("visual change here");
         }, drop);
     }
@@ -1026,7 +996,7 @@ var fileUploadController = (function() {
     }
 
     return {
-        getInstance: function() {
+        getInstance: function () {
             return new Constructor();
         }
     };
@@ -1040,7 +1010,7 @@ var fileUploadController = (function() {
         e.stopPropagation();
         e.preventDefault();
 
-        blobHandler.handleFileSelection(files, function(data) {
+        blobHandler.handleFileSelection(files, function (data) {
             parseFile(data.srcElement.result);
         });
     }
@@ -1050,7 +1020,7 @@ var fileUploadController = (function() {
         var char = dtc.export(text);
         addCharacter();
 
-        setTimeout(function() {
+        setTimeout(function () {
             if (confirm("Ok for Type 2 sheet, Cancel for Type 1 sheet")) {
                 sheetTypeTwoController.getInstance().import(char);
             } else {
@@ -1061,28 +1031,27 @@ var fileUploadController = (function() {
     //click the add character button and then click save changes
     function addCharacter() {
         console.log("addCharacter");
-        var contentDiv = document.querySelector('#journal > div:nth-child(2)')
-          , characterPopout = document.querySelector('div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons')
-          , addButton = '.superadd'
-          , addCharacter = '#addnewcharacter'
-          , saveChanges = 'div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons > div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > div > button:nth-child(1)';
+        var contentDiv = document.querySelector('#journal > div:nth-child(2)'),
+        characterPopout = document.querySelector('div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable.ui-resizable.ui-dialog-buttons'),
+        addButton = '.superadd',
+        addCharacter = '#addnewcharacter',
+        saveChanges = 'div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > div.ui-dialog-buttonset > button.ui-button-text-only:nth-child(1)';
 
-        waitForDOM(contentDiv, addButton, null, function() {
+        waitForDOM(contentDiv, addButton, null, function () {
             document.querySelector(addButton).click();
 
-            waitForDOM(contentDiv, addCharacter, null, function() {
+            waitForDOM(contentDiv, addCharacter, null, function () {
                 document.querySelector(addCharacter).click();
 
-                waitForDOM(document, saveChanges, null, function() {
-                    setTimeout(function() {
+                waitForDOM(document, saveChanges, null, function () {
+                    setTimeout(function () {
                         document.querySelector(saveChanges).click();
                     }, 1000);
                 });
             });
         });
     }
-}
-)();
+})();
 
 //common functions
 function addRow(section, callback, item) {
@@ -1095,15 +1064,14 @@ function addRow(section, callback, item) {
 function addRows(selector, section, callback, list) {
     console.log("addRows", selector, section, callback, list);
 
-    list.forEach(function(item) {
-        promise.then(function(val) {
-            return new Promise(function(resolve, reject) {
+    list.forEach(function (item) {
+        promise.then(function (val) {
+            return new Promise(function (resolve, reject) {
                 addRow(section, callback, item);
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve();
                 }, 500);
-            }
-            )
+            })
         })
     });
 }
@@ -1122,9 +1090,9 @@ function clearSection(tab, selector) {
     }
 
     editButton.click();
-    waitForDOM(section, 'button.repcontrol_del', null, function() {
+    waitForDOM(section, 'button.repcontrol_del', null, function () {
         deleteButtons = section.querySelectorAll('button.repcontrol_del');
-        deleteButtons.forEach(function(button) {
+        deleteButtons.forEach(function (button) {
             button.click();
         });
         editButton.click();
@@ -1138,7 +1106,7 @@ function findEmptyRow(context, selector) {
     var i;
     var returnMe = null;
     //for (i = 0; i < rows.length; i++)
-    rows.forEach(function(row) {
+    rows.forEach(function (row) {
         var val = row.querySelector('input[name="attr_name"]').value;
         if ((val === '') && (!returnMe)) {
             //console.log("findEmptyRow returning", row);
@@ -1154,7 +1122,7 @@ function getForegroundCharSheet() {
     var context = null;
     var highestZ = -1;
 
-    sheetsInMarkup.forEach(function(sheet) {
+    sheetsInMarkup.forEach(function (sheet) {
         if ((sheet.currentStyle) && (sheet.currentStyle.display === "block") || (getComputedStyle(sheet, null).display === "block")) {
             var parent = sheet.parentElement;
 
@@ -1176,9 +1144,9 @@ function getNewRow(context) {
     var addButtonSelector = 'button.repcontrol_add';
 
     console.log("getNewRow", 'context', context);
-    return waitForDOM(context, addButtonSelector, null, function() {
+    return waitForDOM(context, addButtonSelector, null, function () {
         context.querySelector(addButtonSelector).click();
-        return waitForDOM(context, rowSelector, findEmptyRow, function(result) {
+        return waitForDOM(context, rowSelector, findEmptyRow, function (result) {
             return result;
         });
     });
@@ -1219,13 +1187,14 @@ function updateValue(context, selector, value) {
 }
 function waitForDOM(context, selector, testCallback, doneCallback, endTime) {
     //console.log('waitForDOM', 'context', context, 'selector', selector, 'testCallback', testCallback, 'doneCallback', doneCallback, 'endTime', endTime);
-    var element, testResult = null;
+    var element,
+    testResult = null;
 
     if (!context) {
         context = document;
     }
     if (!testCallback) {
-        testCallback = function(context, selector, element) {
+        testCallback = function (context, selector, element) {
             return element ? true : false;
         }
     }
@@ -1241,7 +1210,7 @@ function waitForDOM(context, selector, testCallback, doneCallback, endTime) {
         return doneCallback(testResult);
     } else if (Date.now() <= endTime) {
         //console.log('delaying', 'now', Date.now(), 'end', endTime);
-        setTimeout(function() {
+        setTimeout(function () {
             return waitForDOM(context, selector, testCallback, doneCallback, endTime);
         }, 100);
     } else {
@@ -1261,7 +1230,7 @@ function htmlDecode(input) {
     }
 }
 
-var BlobHandler = (function() {
+var BlobHandler = (function () {
     // Instance stores a reference to the Singleton
     var instance;
 
@@ -1279,18 +1248,17 @@ var BlobHandler = (function() {
         function _chromeFileRead() {
             var chosenFileEntry = null;
 
-            chooseFileButton.addEventListener('click', function(e) {
+            chooseFileButton.addEventListener('click', function (e) {
                 chrome.fileSystem.chooseEntry({
                     type: 'openFile'
-                }, function(readOnlyEntry) {
-                    readOnlyEntry.file(function(file) {
+                }, function (readOnlyEntry) {
+                    readOnlyEntry.file(function (file) {
                         var reader = new FileReader();
 
                         reader.onerror = errorHandler;
-                        reader.onloadend = function(e) {
+                        reader.onloadend = function (e) {
                             console.log(e.target.result);
-                        }
-                        ;
+                        };
 
                         reader.readAsText(file);
                     });
@@ -1298,12 +1266,12 @@ var BlobHandler = (function() {
             });
         }
         function _chromeStorageSave(data) {
-            chrome.fileSystem.getWritableEntry(chosenFileEntry, function(writableFileEntry) {
-                writableFileEntry.createWriter(function(writer) {
+            chrome.fileSystem.getWritableEntry(chosenFileEntry, function (writableFileEntry) {
+                writableFileEntry.createWriter(function (writer) {
                     writer.onerror = errorHandler;
                     writer.onwriteend = callback;
 
-                    chosenFileEntry.file(function(file) {
+                    chosenFileEntry.file(function (file) {
                         writer.write(file);
                     });
                 }, errorHandler);
@@ -1321,7 +1289,7 @@ var BlobHandler = (function() {
         }
         function _getBlob() {
             try {
-                return new Blob([data],{
+                return new Blob([data], {
                     type: 'application/json'
                 });
             } catch (e) {
@@ -1406,19 +1374,19 @@ var BlobHandler = (function() {
         return {
             // Public methods and variables
             //public
-            saveFile: function(data) {
+            saveFile: function (data) {
                 console.log("Helper.saveFile");
 
                 if (!!data) {
                     if (this.htmlBlobSupport()) {
                         this._html5WebStorageSave(data);
-                    } else if (this._chromeSupport()) {// todo add Chrome stuff here
+                    } else if (this._chromeSupport()) { // todo add Chrome stuff here
                     }
                 } else {
                     alert("no data");
                 }
             },
-            handleFileSelection: function(files, handler) {
+            handleFileSelection: function (files, handler) {
                 if (!files) {
                     alert("The selected file is invalid - do not select a folder. Please reselect and try again.");
                     return;
@@ -1446,52 +1414,50 @@ var BlobHandler = (function() {
                 _startFileRead(file, handler);
                 //document.getElementById('hideWrapper').style.display = 'none'; // Remove the file picker dialog from the screen since we have a valid file.
             },
-            loadFile: function(name, callback) {
+            loadFile: function (name, callback) {
                 var blob = new Blob();
                 // Now the user will have the option of clicking the Save button and the Open button.
                 window.navigator.msSaveOrOpenBlob(blob, name);
                 return callback(blob) || blob;
             },
-            displayFileSelectDialogue: function(callback) {
+            displayFileSelectDialogue: function (callback) {
                 var self = this;
                 var fileSelector = document.createElement('input');
                 var selectDialogueLink = document.createElement('a');
 
                 fileSelector.setAttribute('type', 'file');
                 fileSelector.setAttribute('style', 'display:none');
-                fileSelector.onchange = function(result) {
+                fileSelector.onchange = function (result) {
                     console.log('fileSelector.onchange result', result);
                     self.handleFileSelection(this.files, callback);
-                }
-                ;
+                };
 
                 selectDialogueLink.setAttribute('href', '');
                 selectDialogueLink.innerText = "Select File";
-                selectDialogueLink.addEventListener("click", function() {}, false);
+                selectDialogueLink.addEventListener("click", function () {}, false);
 
                 document.body.appendChild(selectDialogueLink);
                 selectDialogueLink.click();
                 //todo return the blob?
-            }//} : null;
+            } //} : null;
         };
-    }
-    ;return {
-        getInstance: function() {
+    };
+    return {
+        getInstance: function () {
             if (!instance) {
                 instance = init();
             }
             return instance;
         }
     };
-}
-)();
+})();
 
-(function() {
-    window.addEventListener("dragover", function(e) {
+(function () {
+    window.addEventListener("dragover", function (e) {
         e = e || event;
         e.preventDefault();
     }, false);
-    window.addEventListener("drop", function(e) {
+    window.addEventListener("drop", function (e) {
         e = e || event;
         e.preventDefault();
     }, false);
@@ -1499,5 +1465,4 @@ var BlobHandler = (function() {
     var fuc = fileUploadController.getInstance();
     fuc.init();
     alert("Drag a JSON file generated by GCS onto the characters panel and your character will be imported.");
-}
-)();
+})();
